@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceDefinition name="Lokad.Cloud.Snapshot" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceDefinition">
+  <WorkerRole name="Lokad.Cloud.Snapshot.Cloud.Worker">
+    <ConfigurationSettings>
+      <Setting name="SnapshotManagementAccount" />
+      <Setting name="LiveAccounts" />
+      <Setting name="SnapshotIntervalDays" />
+      <Setting name="NumberOfSnapshotsToKeep" />
+    </ConfigurationSettings>
+  </WorkerRole>
+  <WebRole name="Lokad.Cloud.Snapshot.Cloud.UI">
+    <InputEndpoints>
+      <InputEndpoint name="HttpIn" protocol="http" port="80" />
+    </InputEndpoints>
+    <ConfigurationSettings>
+      <Setting name="SnapshotManagementAccount" />
+      <Setting name="MonitoringApiKey" />
+      <Setting name="Admins" />
+    </ConfigurationSettings>
+  </WebRole>
+</ServiceDefinition>

@@ -1,0 +1,3140 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Lokad.Cloud.Framework</name>
+    </assembly>
+    <members>
+        <member name="T:Lokad.Cloud.Storage.ITableStorageProvider">
+            <summary>Abstraction for the Table Storage.</summary>
+            <remarks>This provider represents a logical abstraction of the Table Storage,
+            not the Table Storage itself. In particular, implementations handle paging
+            and query splitting internally. Also, this provider implicitly relies on
+            serialization to handle generic entities (not constrained by the few datatypes
+            available to the Table Storage).</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.CreateTable(System.String)">
+            <summary>Creates a new table if it does not exist already.</summary>
+            <returns><c>true</c> if a new table has been created.
+            <c>false</c> if the table already exists.
+            </returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.DeleteTable(System.String)">
+            <summary>Deletes a table if it exists.</summary>
+            <returns><c>true</c> if the table has been deleted.
+            <c>false</c> if the table does not exist.
+            </returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.GetTables">
+            <summary>Returns the list of all the tables that exist in the storage.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String)">
+            <summary>Iterates through all entities of a given table.</summary>
+            <remarks>The enumeration is typically expected to be lazy, iterating through
+            all the entities with paged request. If the table does not exist, an
+            empty enumeration is returned.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String,System.String)">
+            <summary>Iterates through all entities of a given table and partition.</summary>
+            <remarks><para>The enumeration is typically expected to be lazy, iterating through
+            all the entities with paged request. If the table does not exists, or if the partition
+            does not exists, an empty enumeration is returned.</para>
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String,System.String,System.String,System.String)">
+            <summary>Iterates through a range of entities of a given table and partition.</summary>
+            <param name="tableName">Name of the Table.</param>
+            <param name="partitionKey">Name of the partition which can not be null.</param>
+            <param name="startRowKey">Inclusive start row key. If <c>null</c>, no start range
+            constraint is enforced.</param>
+            <param name="endRowKey">Exclusive end row key. If <c>null</c>, no ending range
+            constraint is enforced.</param>
+            <remarks>
+            The enumeration is typically expected to be lazy, iterating through
+            all the entities with paged request.The enumeration is ordered by row key.
+            If the table or the partition key does not exist, the returned enumeration is empty.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>Iterates through all entities specified by their row keys.</summary>
+            <param name="tableName">The name of the table. This table should exists otherwise the method will fail.</param>
+            <param name="partitionKey">Partition key (can not be null).</param>
+            <param name="rowKeys">lazy enumeration of non null string representing rowKeys.</param>
+            <remarks>The enumeration is typically expected to be lazy, iterating through
+            all the entities with paged request. If the table or the partition key does not exist,
+            the returned enumeration is empty.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.Insert``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})">
+             <summary>Inserts a collection of new entities into the table storage.</summary>
+             <remarks>
+             <para>The call is expected to fail on the first encountered already-existing
+             entity. Results are not garanteed if one or several entities already exist.
+             </para>
+             <para>There is no upper limit on the number of entities provided through
+             the enumeration. The implementations are expected to lazily iterates
+             and to create batch requests as the move forward.
+             </para>
+             <para>If the table does not exist then it should be created.</para>
+             <warning>Idempotence is not enforced.</warning>
+             </remarks>
+            <exception cref="T:System.InvalidOperationException"> if an already existing entity has been encountered.</exception>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.Update``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}},System.Boolean)">
+            <summary>Updates a collection of existing entities into the table storage.</summary>
+            <remarks>
+            <para>The call is expected to fail on the first non-existing entity. 
+            Results are not garanteed if one or several entities do not exist already.
+            </para>
+            <para>If <paramref name="force"/> is <c>false</c>, the call is expected to
+            fail if one or several entities have changed in the meantime. If <c>true</c>,
+            the entities are overwritten even if they've been changed remotely in the meantime.
+            </para>
+            <para>There is no upper limit on the number of entities provided through
+            the enumeration. The implementations are expected to lazily iterates
+            and to create batch requests as the move forward.
+            </para>
+            <para>Idempotence of the implementation is required.</para>
+            </remarks>
+            <exception cref="T:System.InvalidOperationException"> thrown if the table does not exist
+            or an non-existing entity has been encountered.</exception>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.Upsert``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})">
+            <summary>Updates or insert a collection of existing entities into the table storage.</summary>
+            <remarks>
+            <para>New entities will be inserted. Existing entities will be updated,
+            even if they have changed remotely in the meantime.
+            </para>
+            <para>There is no upper limit on the number of entities provided through
+            the enumeration. The implementations are expected to lazily iterates
+            and to create batch requests as the move forward.
+            </para>
+            <para>If the table does not exist then it should be created.</para>
+            <para>Idempotence of the implementation is required.</para>
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.Delete``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>Deletes all specified entities.</summary>
+            <param name="tableName">Name of the table.</param>
+            <param name="partitionKey">The partition key (assumed to be non null).</param>
+            <param name="rowKeys">Lazy enumeration of non null string representing the row keys.</param>
+            <remarks>
+            <para>
+            The implementation is expected to lazily iterate through all row keys
+            and send batch deletion request to the underlying storage.</para>
+            <para>Idempotence of the method is required.</para>
+            <para>The method should not fail if the table does not exist.</para>
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.ITableStorageProvider.Delete``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}},System.Boolean)">
+            <summary>Deletes a collection of entities.</summary>
+            <remarks>
+            <para>
+            The implementation is expected to lazily iterate through all row keys
+            and send batch deletion request to the underlying storage.</para>
+            <para>Idempotence of the method is required.</para>
+            <para>The method should not fail if the table does not exist.</para>
+            <para>If <paramref name="force"/> is <c>false</c>, the call is expected to
+            fail if one or several entities have changed remotely in the meantime. If <c>true</c>,
+            the entities are deleted even if they've been changed remotely in the meantime.
+            </para>
+            </remarks>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader">
+            <remarks>
+            Since the assemblies are loaded in the current <c>AppDomain</c>, this class
+            should be a natural candidate for a singleton design pattern. Yet, keeping
+            it as a plain class facilitates the IoC instantiation.
+            </remarks>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader.ContainerName">
+            <summary>Name of the container used to store the assembly package.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader.PackageBlobName">
+            <summary>Name of the blob used to store the assembly package.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader.ConfigurationBlobName">
+            <summary>Name of the blob used to store the client configuration.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader._lastPackageEtag">
+            <summary>Etag of the assembly package. This property is set when
+            assemblies are loaded. It can be used to monitor the availability of
+            a new package.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader.#ctor(Lokad.Cloud.Storage.IBlobStorageProvider)">
+            <summary>Build a new package loader.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader.LoadPackage">
+            <summary>Loads the assembly package.</summary>
+            <remarks>This method is expected to be called only once. Call <see cref="M:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader.CheckUpdate(System.Boolean)"/>
+            afterward.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader.ResetUpdateStatus">
+            <summary>
+            Reset the update status to the currently available version,
+            such that <see cref="M:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader.CheckUpdate(System.Boolean)"/> does not cause an update to happen.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader.CheckUpdate(System.Boolean)">
+            <summary>Check for the availability of a new assembly package
+            and throw a <see cref="T:Lokad.Cloud.ServiceFabric.Runtime.TriggerRestartException"/> if a new package
+            is available.</summary>
+            <param name="delayCheck">If <c>true</c> then the actual update
+            check if performed not more than the frequency specified by 
+            <see cref="P:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader.UpdateCheckFrequency"/>.</param>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.Runtime.AssemblyLoader.UpdateCheckFrequency">
+            <summary>Frequency for checking for update concerning the assembly package.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.Runtime.AssemblyResolver">
+            <summary>Resolves assemblies by caching assemblies that were loaded.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.Runtime.AssemblyResolver._assemblyCache">
+            <summary>
+            Holds the loaded assemblies.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.AssemblyResolver.#ctor">
+            <summary> 
+            Initializes an instance of the <see cref="T:Lokad.Cloud.ServiceFabric.Runtime.AssemblyResolver"/>  class.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.AssemblyResolver.Attach">
+            <summary> 
+            Installs the assembly resolver by hooking up to the 
+            <see cref="E:System.AppDomain.AssemblyResolve"/> event.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.AssemblyResolver.Detach">
+            <summary> 
+            Uninstalls the assembly resolver.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.AssemblyResolver.AssemblyResolve(System.Object,System.ResolveEventArgs)">
+            <summary> 
+            Resolves an assembly not found by the system using the assembly cache.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.AssemblyResolver.AssemblyLoad(System.Object,System.AssemblyLoadEventArgs)">
+            <summary>
+            Occurs when an assembly is loaded. The loaded assembly is added 
+            to the assembly cache.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.ScheduledServiceState">
+            <summary>Configuration state of the <seealso cref="T:Lokad.Cloud.ServiceFabric.ScheduledService"/>.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.ScheduledServiceState.TriggerInterval">
+            <summary>Indicates the frequency this service must be called.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.ScheduledServiceState.LastExecuted">
+            <summary>Date of the last execution.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.ScheduledServiceState.Lease">
+            <summary>
+            Lease state info to support synchronized exclusive execution of this
+            service (applies only to cloud scoped service, not per worker scheduled
+            ones). If <c>null</c> then the service is not currently leased by any
+            worker.
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.ScheduledServiceState.IsBusy">
+            <summary>
+            Indicates whether this service is currently running
+            (apply only to globally scoped services, not per worker ones)
+            .</summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.ScheduledServiceStateName">
+            <summary>Strong typed blob name for <see cref="T:Lokad.Cloud.ServiceFabric.ScheduledServiceState"/>.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.BlobName`1">
+            <summary>
+            Base class for strongly typed hierarchical references to blobs of a
+            strongly typed content.
+            </summary>
+            <typeparam name="T">Type contained in the blob.</typeparam>
+            <remarks>
+            The type <c>T</c> is handy to strengthen the 
+            <see cref="T:Lokad.Cloud.Storage.StorageExtensions"/>.
+            </remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.UntypedBlobName">
+            <summary>
+            Base class for untyped hierarchical blob names. Implementations should
+            not inherit <see cref="T:Lokad.Cloud.Storage.UntypedBlobName"/>c&gt; but <see cref="T:Lokad.Cloud.Storage.BlobName`1"/> instead.
+            </summary>
+        </member>
+        <member name="F:Lokad.Cloud.Storage.UntypedBlobName.DateFormatInBlobName">
+            <summary>Sortable pattern for date times.</summary>
+            <remarks>Hyphens can be eventually used to refine further the iteration.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.UntypedBlobName.Print``1(``0)">
+            <summary>Do not use directly, call <see cref="M:Lokad.Cloud.Storage.UntypedBlobName.ToString"/> instead.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.UntypedBlobName.Parse``1(System.String)">
+            <summary>Parse a hierarchical blob name.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.UntypedBlobName.GetContainerName``1">
+            <summary>Returns the <see cref="P:Lokad.Cloud.Storage.UntypedBlobName.ContainerName"/> value without
+            having an instance at hand.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.UntypedBlobName.ContainerName">
+            <summary>Name of the container (to be used as a short-hand while
+            operating with the <see cref="T:Lokad.Cloud.Storage.IBlobStorageProvider"/>).</summary>
+            <remarks>Do not introduce an extra field for the property as
+            it would be incorporated in the blob name. Instead, just
+            return a constant string.</remarks>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.ScheduledServiceStateName.ServiceName">
+            <summary>Name of the service being refered to.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.ScheduledServiceStateName.#ctor(System.String)">
+            <summary>Instantiate the reference associated to the specified service.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.ScheduledServiceStateName.GetPrefix">
+            <summary>Helper for service states enumeration.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.ScheduledService">
+            <summary>This cloud service is automatically called by the framework
+            on scheduled basis. Scheduling options are provided through the
+            <see cref="T:Lokad.Cloud.ServiceFabric.ScheduledServiceSettingsAttribute"/>.</summary>
+            <remarks>A empty constructor is needed for instantiation through reflection.</remarks>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.CloudService">
+            <summary>Base class for cloud services.</summary>
+            <remarks>Do not inherit directly from <see cref="T:Lokad.Cloud.ServiceFabric.CloudService"/>, inherit from
+            <see cref="T:Lokad.Cloud.ServiceFabric.QueueService`1"/> or <see cref="T:Lokad.Cloud.ServiceFabric.ScheduledService"/> instead.</remarks>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.CloudService.TemporaryContainer">
+            <summary>Name of the container associated to temporary items. Each blob
+            is prefixed with his lifetime expiration date.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.CloudService.ExecutionTimeout">
+            <summary>Timeout set at 1h58.</summary>
+            <remarks>The timeout provided by Windows Azure for message consumption
+            on queue is set at 2h. Yet, in order to avoid race condition between
+            message silent re-inclusion in queue and message deletion, the timeout here
+            is default at 1h58.</remarks>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.CloudService._state">
+            <summary>Indicates the state of the service, as retrieved during the last check.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.CloudService._lastStateCheck">
+            <summary>Indicates the last time the service has checked its execution status.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudService.#ctor">
+            <summary>
+            Default constructor
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudService.Start">
+            <summary>
+            Wrapper method for the <see cref="M:Lokad.Cloud.ServiceFabric.CloudService.StartImpl"/> method. Checks that the
+            service status before executing the inner start.
+            </summary>
+            <returns>
+            See <seealso cref="M:Lokad.Cloud.ServiceFabric.CloudService.StartImpl"/> for the semantic of the return value.
+            </returns>
+            <remarks>
+            If the execution does not complete within 
+            <see cref="F:Lokad.Cloud.ServiceFabric.CloudService.ExecutionTimeout"/>, then a <see cref="T:System.TimeoutException"/> is
+            thrown.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudService.StartImpl">
+            <summary>
+            Called when the service is launched.
+            </summary>
+            <returns>
+            Feedback with details whether the service did actually perform any
+            operation, and whether it knows or assumes to have more work available for
+            immediate execution. This value is used by the framework to adjust the
+            scheduling behavior for the respective services.
+            </returns>
+            <remarks>
+            This method is expected to be implemented by the framework services not by
+            the app services.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudService.Put``1(``0)">
+            <summary>Put a message into the queue implicitly associated to the type <c>T</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudService.Put``1(``0,System.String)">
+            <summary>Put a message into the queue identified by <c>queueName</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudService.PutRange``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>Put messages into the queue implicitly associated to the type <c>T</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudService.PutRange``1(System.Collections.Generic.IEnumerable{``0},System.String)">
+            <summary>Put messages into the queue identified by <c>queueName</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudService.PutWithDelay``1(``0,System.DateTimeOffset)">
+            <summary>Put a message into the queue implicitly associated to the type <c>T</c> at the
+            time specified by the <c>triggerTime</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudService.PutWithDelay``1(``0,System.DateTimeOffset,System.String)">
+            <summary>Put a message into the queue identified by <c>queueName</c> at the
+            time specified by the <c>triggerTime</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudService.PutRangeWithDelay``1(System.Collections.Generic.IEnumerable{``0},System.DateTimeOffset)">
+            <summary>Put messages into the queue implicitly associated to the type <c>T</c> at the
+            time specified by the <c>triggerTime</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudService.PutRangeWithDelay``1(System.Collections.Generic.IEnumerable{``0},System.DateTimeOffset,System.String)">
+            <summary>Put messages into the queue identified by <c>queueName</c> at the
+            time specified by the <c>triggerTime</c>.</summary>
+            <remarks>This method acts as a delayed put operation, the message not being put
+            before the <c>triggerTime</c> is reached.</remarks>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.CloudService.StateCheckInterval">
+            <summary>Indicates the frequency where the service is actually checking for its state.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.CloudService.Name">
+            <summary>Name of the service (used for reporting purposes).</summary>
+            <remarks>Default implementation returns <c>Type.FullName</c>.</remarks>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.CloudService.Providers">
+            <summary>Providers used by the cloud service to access the storage.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.CloudService.BlobStorage">
+            <summary>Short-hand for <c>Providers.BlobStorage</c>.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.CloudService.QueueStorage">
+            <summary>Short-hand for <c>Providers.QueueStorage</c>.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.CloudService.TableStorage">
+            <summary>Short-hand for <c>Providers.TableStorage</c>.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.CloudService.Log">
+            <summary>Short-hand for <c>Providers.Log</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.ScheduledService.#ctor">
+            <summary>Constructor.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.ScheduledService.StartImpl">
+            <seealso cref="M:Lokad.Cloud.ServiceFabric.CloudService.StartImpl"/>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.ScheduledService.SurrenderLease">
+            <summary>The lease can be surrender in two situations:
+            1- the service completes normally, and we surrender the lease accordingly.
+            2- the runtime is being shutdown, and we can't hold the lease any further. 
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.ScheduledService.Dispose">
+            <summary>Don't call this method. Disposing the scheduled service
+            should only be done by the <see cref="T:Lokad.Cloud.IRuntimeFinalizer"/> when
+            the environment is being forcibly shut down.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.ScheduledService.GetDefaultState">
+            <summary>
+            Prepares this service's default state based on its settings attribute.
+            In case no attribute is found then Maybe.Empty is returned.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.ScheduledService.CreateLease(System.DateTimeOffset)">
+            <summary>Prepares a new lease.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.ScheduledService.StartOnSchedule">
+            <summary>Called by the framework.</summary>
+            <remarks>We suggest not performing any heavy processing here. In case
+            of heavy processing, put a message and use <see cref="T:Lokad.Cloud.ServiceFabric.QueueService`1"/>
+            instead.</remarks>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.CloudServiceSettingsAttribute">
+            <summary>Shared settings for all <see cref="T:Lokad.Cloud.ServiceFabric.CloudService"/>s.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.CloudServiceSettingsAttribute.AutoStart">
+            <summary>Indicates whether the service is be started by default
+            when the cloud app is deployed.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.CloudServiceSettingsAttribute.Priority">
+            <summary>Define the relative priority of this service compared to the
+            other services.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.CloudServiceSettingsAttribute.Description">
+            <summary>Gets a description of the service (for administration purposes).</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.CloudServiceSettingsAttribute.ProcessingTimeoutSeconds">
+            <summary>Execution time-out for the <c>StartImpl</c> methods of 
+            <see cref="T:Lokad.Cloud.ServiceFabric.CloudService"/> inheritors. When processing messages it is
+            recommended to keep the timeout below 2 hours, or 7200 seconds.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.IProvisioningProvider">
+            <summary>Defines an interface to auto-scale your cloud app.</summary>
+            <remarks>The implementation relies on the Management API on Windows Azure.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Management.IProvisioningProvider.SetWorkerInstanceCount(System.Int32)">
+            <summary>Defines the number of regular VM instances to get allocated
+            for the cloud app.</summary>
+            <param name="count"></param>
+        </member>
+        <member name="M:Lokad.Cloud.Management.IProvisioningProvider.GetWorkerInstanceCount">
+            <summary>Indicates the number of VM instances currently allocated
+            for the cloud app.</summary>
+            <remarks>If <see cref="P:Lokad.Cloud.Management.IProvisioningProvider.IsAvailable"/> is <c>false</c> this method
+            will be returning a <c>null</c> value.</remarks>
+        </member>
+        <member name="P:Lokad.Cloud.Management.IProvisioningProvider.IsAvailable">
+            <summary>Indicates where the provider is correctly setup.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.StorageExtensions">
+            <summary>Helper extensions methods for storage providers.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.StorageExtensions.RetryUpdate(System.Func{System.Boolean})">
+            <summary>Retry an update method until it succeeds. Timing
+            increases to avoid overstressing the storage for nothing.</summary>
+            <param name="func"></param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.StorageExtensions.GetBlobOrDelete``1(Lokad.Cloud.Storage.IBlobStorageProvider,System.String,System.String)">
+            <summary>Gets the corresponding object. If the deserialization fails
+            just delete the existing copy.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.StorageExtensions.GetBlobOrDelete``1(Lokad.Cloud.Storage.IBlobStorageProvider,Lokad.Cloud.Storage.BlobName{``0})">
+            <summary>Gets the corresponding object. If the deserialization fails
+            just delete the existing copy.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.StorageExtensions.Get``1(Lokad.Cloud.Storage.IQueueStorageProvider,System.String,System.Int32)">
+            <summary>Gets messages from a queue with a visibility timeout of 2 hours and a maximum of 50 processing trials.</summary>
+            <typeparam name="T">Type of the messages.</typeparam>
+            <param name="queueName">Identifier of the queue to be pulled.</param>
+            <param name="count">Maximal number of messages to be retrieved.</param>
+            <returns>Enumeration of messages, possibly empty.</returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.StorageExtensions.Get``1(Lokad.Cloud.Storage.IQueueStorageProvider,System.String,System.Int32,System.Int32)">
+            <summary>Gets messages from a queue with a visibility timeout of 2 hours.</summary>
+            <typeparam name="T">Type of the messages.</typeparam>
+            <param name="queueName">Identifier of the queue to be pulled.</param>
+            <param name="count">Maximal number of messages to be retrieved.</param>
+            <param name="maxProcessingTrials">
+            Maximum number of message processing trials, before the message is considered as
+            being poisonous, removed from the queue and persisted to the 'failing-messages' store.
+            </param>
+            <returns>Enumeration of messages, possibly empty.</returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.StorageExtensions.Get``1(Lokad.Cloud.Storage.ITableStorageProvider,System.String,System.String,System.String)">
+            <summary>Gets the specified cloud entity if it exists.</summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.StorageExtensions.GetTable``1(Lokad.Cloud.Storage.ITableStorageProvider,System.String)">
+            <summary>Gets a strong typed wrapper around the table storage provider.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.StorageExtensions.Update``1(Lokad.Cloud.Storage.ITableStorageProvider,System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})">
+            <summary>Updates a collection of existing entities into the table storage.</summary>
+            <remarks>
+            <para>The call is expected to fail on the first non-existing entity. 
+            Results are not garanteed if one or several entities do not exist already.
+            </para>
+            <para>The call is also expected to fail if one or several entities have
+            changed remotely in the meantime. Use the overloaded method with the additional
+            force parameter to change this behavior if needed.
+            </para>
+            <para>There is no upper limit on the number of entities provided through
+            the enumeration. The implementations are expected to lazily iterates
+            and to create batch requests as the move forward.
+            </para>
+            <para>Idempotence of the implementation is required.</para>
+            </remarks>
+            <exception cref="T:System.InvalidOperationException"> thrown if the table does not exist
+            or an non-existing entity has been encountered.</exception>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.StorageExtensions.Delete``1(Lokad.Cloud.Storage.ITableStorageProvider,System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})">
+            <summary>Deletes a collection of entities.</summary>
+            <remarks>
+            <para>
+            The implementation is expected to lazily iterate through all row keys
+            and send batch deletion request to the underlying storage.</para>
+            <para>Idempotence of the method is required.</para>
+            <para>The method should not fail if the table does not exist.</para>
+            <para>The call is expected to fail if one or several entities have
+            changed remotely in the meantime. Use the overloaded method with the additional
+            force parameter to change this behavior if needed.
+            </para>
+            </remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.MessageWrapper">
+            <summary>The purpose of the <see cref="T:Lokad.Cloud.Storage.MessageWrapper"/> is to gracefully
+            handle messages that are too large of the queue storage (or messages that 
+            happen to be already stored in the Blob Storage).</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.CloudTable`1">
+            <summary>Strong-typed utility wrapper for the <see cref="T:Lokad.Cloud.Storage.ITableStorageProvider"/>.</summary>
+            <remarks>
+            The purpose of the <c>CloudTable{T}</c> is to provide a strong-typed access to the
+            table storage in the client code. Indeed, the row table storage provider typically
+            let you (potentially) mix different types into a single table.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.#ctor(Lokad.Cloud.Storage.ITableStorageProvider,System.String)">
+            <remarks></remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Get(System.String,System.String)">
+            <seealso cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String,System.String)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Get">
+            <seealso cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Get(System.String)">
+            <seealso cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String,System.String)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Get(System.String,System.String,System.String)">
+            <seealso cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String,System.String,System.String,System.String)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Get(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <seealso cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.String})"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Insert(System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{`0}})">
+            <seealso cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Insert``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Insert(Lokad.Cloud.Storage.CloudEntity{`0})">
+            <seealso cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Insert``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Update(System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{`0}})">
+            <seealso cref="!:ITableStorageProvider.Update&lt;T&gt;(string, IEnumerable&lt;CloudEntity&lt;T&gt;&gt;)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Update(Lokad.Cloud.Storage.CloudEntity{`0})">
+            <seealso cref="!:ITableStorageProvider.Update&lt;T&gt;(string, IEnumerable&lt;CloudEntity&lt;T&gt;&gt;)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Upsert(System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{`0}})">
+            <seealso cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Upsert``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Upsert(Lokad.Cloud.Storage.CloudEntity{`0})">
+            <seealso cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Upsert``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Delete(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <seealso cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Delete``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.String})"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.CloudTable`1.Delete(System.String,System.String)">
+            <seealso cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Delete``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.String})"/>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.CloudTable`1.Name">
+            <summary>Name of the underlying table.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.CloudFormatter">
+            <summary>
+            Formatter based on <c>DataContractSerializer</c> and <c>NetDataContractSerializer</c>. 
+            The formatter targets storage of persistent or transient data in the cloud storage.
+            </summary>
+            <remarks>
+            If a <c>DataContract</c> attribute is present, then the <c>DataContractSerializer</c>
+            is favored. If not, then the <c>NetDataContractSerializer</c> is used instead.
+            This class is not <b>thread-safe</b>.
+            </remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.IBinaryFormatter">
+            <summary>Defines the interface for a custom formatter.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBinaryFormatter.Serialize(System.IO.Stream,System.Object)">
+            <summary>Serializes an object to a stream.</summary>
+            <param name="destination">The destination stream.</param>
+            <param name="instance">The object.</param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBinaryFormatter.Deserialize(System.IO.Stream,System.Type)">
+            <summary>Deserializes an object from a stream.</summary>
+            <typeparam name="T">The type of the object.</typeparam>
+            <param name="source">The source stream.</param>
+            <param name="type">The type of the object.</param>
+            <returns>The deserialized object.</returns>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.IIntermediateBinaryFormatter">
+            <summary>
+            Optional extension for custom formatters supporting an
+            intermediate xml representation for inspection and recovery.
+            </summary>
+            <remarks>
+            This extension can be implemented even when the serializer
+            is not xml based but in a format that can be transformed
+            to xml easily in a robust way (i.e. more robust than
+            deserializing to a full object). Note that formatters
+            should be registered in IoC as IBinaryFormatter, not by
+            this extension interface.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IIntermediateBinaryFormatter.UnpackXml(System.IO.Stream)">
+            <summary>Unpack and transform an object from a stream to xml.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IIntermediateBinaryFormatter.RepackXml(System.IO.Stream,System.Xml.Linq.XElement)">
+            <summary>Transform and repack an object from xml to a stream.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Api10.CloudAssemblyInfo">
+            <summary>
+            Cloud Assembly Info
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudAssemblyInfo.AssemblyName">
+            <summary>Name of the cloud assembly.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudAssemblyInfo.DateTime">
+            <summary>Time stamp of the cloud assembly.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudAssemblyInfo.Version">
+            <summary>Version of the cloud assembly.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudAssemblyInfo.SizeBytes">
+            <summary>File size of the cloud assembly, in bytes.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudAssemblyInfo.IsValid">
+            <summary>Assembly can be loaded successfully.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudAssemblyInfo.HasSymbols">
+            <summary>Assembly symbol store (PDB file) is available.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.ServiceStatistics">
+            <summary>
+            Cloud Service Monitoring Statistics
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.SynchronizationLeaseState">
+            <summary>Synchronization Lease.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.SynchronizationLeaseState.Acquired">
+            <summary>
+            Point of time when the lease was originally acquired. This value is not
+            updated when a lease is renewed.
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.SynchronizationLeaseState.Timeout">
+            <summary>
+            Point of them when the lease will time out and can thus be taken over and
+            acquired by a new owner.
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.SynchronizationLeaseState.Owner">
+            <summary>Reference of the owner of this lease.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.Azure.BlobStorageProvider">
+            <summary>Provides access to the Blob Storage.</summary>
+            <remarks>
+            All the methods of <see cref="T:Lokad.Cloud.Storage.Azure.BlobStorageProvider"/> are thread-safe.
+            </remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.IBlobStorageProvider">
+            <summary>Abstraction for the Blob Storage.</summary>
+            <remarks>
+            This provider represents a <em>logical</em> blob storage, not the actual
+            Blob Storage. In particular, this provider deals with overflowing buffers
+            that need to be split in smaller chunks to be uploaded.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.CreateContainer(System.String)">
+            <summary>Creates a new blob container.</summary>
+            <returns><c>true</c> if the container was actually created and <c>false</c> if
+            the container already exists.</returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.DeleteContainer(System.String)">
+            <summary>Delete a container.</summary>
+            <remarks>Returns <c>true</c> if the container has been actually deleted.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.PutBlob``1(System.String,System.String,``0)">
+            <summary>Puts a blob (overwrite if the blob already exists).</summary>
+            <remarks>Creates the container if it does not exist beforehand.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.PutBlob``1(System.String,System.String,``0,System.Boolean)">
+            <summary>Puts a blob and optionally overwrite.</summary>
+            <remarks>Creates the container if it does not exist beforehand.</remarks>
+            <returns><c>true</c> if the blob has been put and <c>false</c> if the blob already
+            exists but could not be overwritten.</returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.PutBlob``1(System.String,System.String,``0,System.Boolean,System.String@)">
+            <summary>Puts a blob and optionally overwrite.</summary>
+            <param name="containerName">Name of the container.</param>
+            <param name="blobName">Name of the blob.</param>
+            <param name="item">Item to be put.</param>
+            <param name="overwrite">Indicates whether existing blob should be overwritten
+            if it exists.</param>
+            <param name="etag">New etag (identifier used to track for blob change) if
+            the blob is written, or <c>null</c> if no blob is written.</param>
+            <remarks>Creates the container if it does not exist beforehand.</remarks>
+            <returns><c>true</c> if the blob has been put and <c>false</c> if the blob already
+            exists but could not be overwritten.</returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.PutBlob(System.String,System.String,System.Object,System.Type,System.Boolean,System.String@)">
+            <summary>Puts a blob and optionally overwrite.</summary>
+            <param name="containerName">Name of the container.</param>
+            <param name="blobName">Name of the blob.</param>
+            <param name="item">Item to be put.</param>
+            <param name="type">The type of the blob.</param>
+            <param name="overwrite">Indicates whether existing blob should be overwritten
+            if it exists.</param>
+            <param name="etag">New etag (identifier used to track for blob change) if
+            the blob is written, or <c>null</c> if no blob is written.</param>
+            <remarks>Creates the container if it does not exist beforehand.</remarks>
+            <returns><c>true</c> if the blob has been put and <c>false</c> if the blob already
+            exists but could not be overwritten.</returns>
+            <remarks>This method should only be used when the caller does not know the type of the
+            object stored in the blob at compile time, but it can only be determined at run time.
+            In all other cases, you should use the generic overloads of the method.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.GetBlob``1(System.String,System.String)">
+            <summary>Gets a blob.</summary>
+            <returns>
+            If there is no such blob, the returned object
+            has its property HasValue set to <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.GetBlob``1(System.String,System.String,System.String@)">
+            <summary>Gets a blob.</summary>
+            <typeparam name="T">Blob type.</typeparam>
+            <param name="containerName">Name of the container.</param>
+            <param name="blobName">Name of the blob.</param>
+            <param name="etag">Identifier assigned by the storage to the blob
+            that can be used to distinguish be successive version of the blob 
+            (useful to check for blob update).</param>
+            <returns>
+            If there is no such blob, the returned object
+            has its property HasValue set to <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.GetBlob(System.String,System.String,System.Type,System.String@)">
+            <summary>Gets a blob.</summary>
+            <param name="containerName">Name of the container.</param>
+            <param name="blobName">Name of the blob.</param>
+            <param name="type">The type of the blob.</param>
+            <param name="etag">Identifier assigned by the storage to the blob
+            that can be used to distinguish be successive version of the blob 
+            (useful to check for blob update).</param>
+            <returns>
+            If there is no such blob, the returned object
+            has its property HasValue set to <c>false</c>.
+            </returns>
+            <remarks>This method should only be used when the caller does not know the type of the
+            object stored in the blob at compile time, but it can only be determined at run time.
+            In all other cases, you should use the generic overloads of the method.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.GetBlobXml(System.String,System.String,System.String@)">
+            <summary>
+            Gets a blob in intermediate XML representation for inspection and recovery,
+            if supported by the serialization formatter.
+            </summary>
+            <param name="containerName">Name of the container.</param>
+            <param name="blobName">Name of the blob.</param>
+            <param name="etag">Identifier assigned by the storage to the blob
+            that can be used to distinguish be successive version of the blob 
+            (useful to check for blob update).</param>
+            <returns>
+            If there is no such blob or the formatter supports no XML representation,
+            the returned object has its property HasValue set to <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.GetBlobRange``1(System.String,System.String[],System.String[]@)">
+            <summary>
+            Gets a range of blobs.
+            </summary>
+            <typeparam name="T">Blob type.</typeparam>
+            <param name="containerName">Name of the container.</param>
+            <param name="blobNames">Names of the blobs.</param>
+            <param name="etags">Etag identifiers for all returned blobs.</param>
+            <returns>For each requested blob, an element in the array is returned in the same order.
+            If a specific blob was not found, the corresponding <b>etags</b> array element is <c>null</c>.</returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.GetBlobIfModified``1(System.String,System.String,System.String,System.String@)">
+            <summary>Gets a blob only if the etag has changed meantime.</summary>
+            <typeparam name="T">Type of the blob.</typeparam>
+            <param name="containerName">Name of the container.</param>
+            <param name="blobName">Name of the blob.</param>
+            <param name="oldEtag">Old etag value. If this value is <c>null</c>, the blob will always
+            be retrieved (except if the blob does not exist anymore).</param>
+            <param name="newEtag">New etag value. Will be <c>null</c> if the blob no more exist,
+            otherwise will be set to the current etag value of the blob.</param>
+            <returns>
+            If the blob has not been modified or if there is no such blob,
+            then the returned object has its property HasValue set to <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.GetBlobEtag(System.String,System.String)">
+            <summary>
+            Gets the current etag of the blob, or <c>null</c> if the blob does not exists.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.UpdateIfNotModified``1(System.String,System.String,System.Func{Lokad.Maybe{``0},Lokad.Result{``0}},Lokad.Result{``0}@)">
+            <summary>Update a blob while guaranteeing an atomic update process.</summary>
+            <param name="containerName"></param>
+            <param name="blobName"></param>
+            <param name="updater">The function takes a <c>T</c> object to update
+            and returns a <see cref="T:Lokad.Result`1"/> if update has succeed,
+            because the updater can optionally decide not to succeed with the update
+            (in case where the update no more relevant for example.</param>
+            <param name="result">Result returned by the updated.</param>
+            <returns><c>true</c> if the update is successful.
+            If the blob is updated between the retrieval and the update attempt,
+            then no update is performed and the method returns <c>false</c>.</returns>
+            <remarks>If there is not such blob available, the update is performed with
+            the default <c>T</c> value.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.UpdateIfNotModified``1(System.String,System.String,System.Func{Lokad.Maybe{``0},``0},``0@)">
+            <seealso cref="!:UpdateIfNotModified&lt;T&gt;(string,string,System.Func&lt;T,Lokad.Result&lt;T&gt;&gt;,out Lokad.Result&lt;T&gt;)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.UpdateIfNotModified``1(System.String,System.String,System.Func{Lokad.Maybe{``0},Lokad.Result{``0}})">
+            <summary>Update a blob while guaranteeing an atomic update process.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.UpdateIfNotModified``1(System.String,System.String,System.Func{Lokad.Maybe{``0},``0})">
+            <seealso cref="!:UpdateIfNotModified&lt;T&gt;(string,string,System.Func&lt;T,Lokad.Result&lt;T&gt;&gt;)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.DeleteBlob(System.String,System.String)">
+            <summary>Deletes a blob.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IBlobStorageProvider.List(System.String,System.String)">
+            <summary>Iterates over the blobs considering the specified prefix.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.BlobStorageProvider.UploadBlobContent(Microsoft.WindowsAzure.StorageClient.CloudBlob,System.IO.Stream,System.Boolean,System.String)">
+            <param name="overwrite">If <c>false</c>, then no write happens if the blob already exists.</param>
+            <param name="expectedEtag">When specified, no writing occurs unless the blob etag
+            matches the one specified as argument.</param>
+            <returns></returns>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.Azure.AzurePolicies">
+            <summary>
+            Azure retry policies for corner-situation and server errors.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.AzurePolicies.#cctor">
+            <summary>
+            Static Constructor
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.Azure.AzurePolicies.TransientServerErrorBackOff">
+            <summary>
+            Retry policy to temporarily back off in case of transient Azure server
+            errors, system overload or in case the denial of service detection system
+            thinks we're a too heavy user. Blocks the thread while backing off to
+            prevent further requests for a while (per thread).
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.Azure.AzurePolicies.TransientTableErrorBackOff">
+            <summary>Similar to <see cref="P:Lokad.Cloud.Storage.Azure.AzurePolicies.TransientServerErrorBackOff"/>, yet
+            the Table Storage comes with its own set or exceptions/.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.Azure.AzurePolicies.SlowInstantiation">
+            <summary>
+            Very patient retry policy to deal with container, queue or table instantiation
+            that happens just after a deletion.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Services.MonitoringService">
+            <summary>
+            Collects and persists monitoring statistics.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Services.MonitoringService.StartOnSchedule">
+            <summary>Called by the framework.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Services.AssemblyConfigurationUpdateService">
+            <summary>
+            Checks for updated assemblies or configuration and restarts the runtime if needed.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.ServiceMonitor">
+            <summary>
+            Cloud Service Monitoring Data Provider
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.IServiceMonitor">
+            <summary>
+            Cloud Service Monitoring Instrumentation
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.IServiceMonitor.Monitor(Lokad.Cloud.ServiceFabric.CloudService)">
+            <summary>
+            Monitor starting a server, dispose once its stopped.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ServiceMonitor.#ctor(Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository)">
+            <summary>
+            Creates an instance of the <see cref="T:Lokad.Cloud.Diagnostics.ServiceMonitor"/> class.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ServiceMonitor.RemoveStatisticsBefore(System.DateTimeOffset)">
+            <summary>
+            Remove statistics older than the provided time stamp.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ServiceMonitor.RemoveStatisticsBefore(System.Int32)">
+            <summary>
+            Remove statistics older than the provided number of periods (0 removes all but the current period).
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.DiagnosticsAcquisition">
+            <summary>
+            Facade to collect internal and external diagnostics statistics (pull or push)
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.DiagnosticsAcquisition.CollectStatistics">
+            <summary>
+            Collect (pull) internal and external diagnostics statistics and persists
+            them in the diagnostics repository.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.DiagnosticsAcquisition.RemoveStatisticsBefore(System.DateTimeOffset)">
+            <summary>
+            Remove all statistics older than the provided time stamp from the
+            persistent diagnostics repository.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.DiagnosticsAcquisition.RemoveStatisticsBefore(System.Int32)">
+            <summary>
+            Remove all statistics older than the provided number of periods from the
+            persistent diagnostics repository (0 removes all but the current period).
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.DiagnosticsAcquisition.PushExecutionProfilingStatistics(System.String,System.Collections.Generic.IEnumerable{Lokad.Diagnostics.Persist.ExecutionData})">
+            <summary>
+            Push incremental statistics for external execution profiles.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.DiagnosticsAcquisition.PushTrackedExceptionStatistics(System.String,System.Collections.Generic.IEnumerable{Lokad.Diagnostics.Persist.ExceptionData})">
+            <summary>
+            Push incremental statistics for externally tracked exceptions.
+            </summary>
+            <param name="context"></param>
+            <param name="additionalData"></param>
+        </member>
+        <member name="P:Lokad.Cloud.Diagnostics.DiagnosticsAcquisition.DiagnosticsSource">
+            <remarks>IoC Injected, but optional</remarks>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.QueueServiceSettingsAttribute">
+            <summary>Default settings for the <see cref="T:Lokad.Cloud.ServiceFabric.QueueService`1"/>. Once the queue
+            service is deployed, settings are stored in the <c>lokad-cloud-queues</c> blob
+            container.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.QueueServiceSettingsAttribute.QueueName">
+            <summary>Name of the queue attached to the <see cref="T:Lokad.Cloud.ServiceFabric.QueueService`1"/>.</summary>
+            <remarks>If this value is <c>null</c> or empty, a default queue name is chosen based
+            on the type <c>T</c>.</remarks>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.QueueServiceSettingsAttribute.BatchSize">
+            <summary>Suggested size for batch retrieval of messages.</summary>
+            <remarks>The maximal value is 1000. We suggest to retrieve small messages
+            in batch to reduce network overhead.</remarks>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.QueueServiceSettingsAttribute.MaxProcessingTrials">
+            <summary>
+            Maximum number of times a message is tried to process before it is considered as
+            being poisonous, removed from the queue and persisted to the 'failing-messages' store.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.IRuntimeFinalizer">
+            <summary>Collects objects that absolutely need to be disposed
+            before the runtime gets shut down.</summary>
+            <remarks>
+            There is no garanty that registered objects will actually be disposed.
+            When a VM is shutdown, a small grace period (30s) is offered to clean-up
+            resources before the OS itself is aborted. The runtime finalizer
+            should be kept for very critical clean-ups to be performed during the
+            grace period.
+            
+            Typically, the runtime finalizer is used to abandon in-process queue
+            messages and lease on blobs. Any extra object that you register here
+            is likely to negatively impact more prioritary clean-ups. Use with care.
+            
+            Implementations must be thread-safe.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.IRuntimeFinalizer.Register(System.IDisposable)">
+            <summary>Register a object for high priority finalization if runtime is terminating.</summary>
+            <remarks>The method is idempotent, once an object is registered,
+            registering the object again has no effect.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.IRuntimeFinalizer.Unregister(System.IDisposable)">
+            <summary>Unregister a object from high priority finalization.</summary>
+            <remarks>The method is idempotent, once an object is unregistered,
+            unregistering the object again has no effect.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.IRuntimeFinalizer.FinalizeRuntime">
+            <summary>
+            Finalize high-priority resources hold by the runtime. This method
+            should only be called ONCE upon runtime finalization.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Services.GarbageCollectorService">
+            <summary>
+            Garbage collects temporary items stored in the <see cref="F:Lokad.Cloud.ServiceFabric.CloudService.TemporaryContainer"/>.
+            </summary>
+            <remarks>
+            The container <see cref="F:Lokad.Cloud.ServiceFabric.CloudService.TemporaryContainer"/> is handy to
+            store non-persistent data, typically state information concerning ongoing
+            processing.
+            </remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.TemporaryBlobName`1">
+            <summary>
+            Reference to a unique blob with a fixed limited lifespan.
+            </summary>
+            <remarks>
+            Used in conjunction with the <see cref="T:Lokad.Cloud.Services.GarbageCollectorService"/>. Use as
+            base class for custom temporary blobs with additional attributes, or use
+            the method 
+            <see cref="M:Lokad.Cloud.Storage.TemporaryBlobName`1.GetNew(System.DateTimeOffset)"/> to instantiate a new instance
+            directly linked to the garbage collected container.
+            </remarks>
+            <typeparam name="T">Type referred by the blob name.</typeparam>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.TemporaryBlobName`1.#ctor(System.DateTimeOffset,System.String)">
+            <summary>
+            Explicit constructor.
+            </summary>
+            <param name="expiration">
+            Date that triggers the garbage collection.
+            </param>
+            <param name="suffix">
+            Static suffix (typically used to avoid overlaps between temporary blob name
+            inheritor). If the provided suffix is <c>null</c>then the 
+            default prefix <c>GetType().FullName</c> is used instead.
+            </param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.TemporaryBlobName`1.GetNew(System.DateTimeOffset)">
+            <summary>
+            Gets a full name to a temporary blob.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.TemporaryBlobName`1.GetNew(System.DateTimeOffset,System.String)">
+            <summary>
+            Gets a full name to a temporary blob.
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.TemporaryBlobName`1.ContainerName">
+            <summary>
+            Returns the garbage collected container.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.IQueueStorageProvider">
+            <summary>Abstraction of the Queue Storage.</summary>
+            <remarks>
+            This provider represents a <em>logical</em> queue, not the actual
+            Queue Storage. In particular, the provider implementation deals
+            with overflowing messages (that is to say messages larger than 8kb)
+            on its own.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.List(System.String)">
+            <summary>Gets the list of queues whose name start with the specified prefix.</summary>
+            <param name="prefix">If <c>null</c> or empty, returns all queues.</param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.Get``1(System.String,System.Int32,System.TimeSpan,System.Int32)">
+            <summary>Gets messages from a queue.</summary>
+            <typeparam name="T">Type of the messages.</typeparam>
+            <param name="queueName">Identifier of the queue to be pulled.</param>
+            <param name="count">Maximal number of messages to be retrieved.</param>
+            <param name="visibilityTimeout">
+            The visibility timeout, indicating when the not yet deleted message should
+            become visible in the queue again.
+            </param>
+            <param name="maxProcessingTrials">
+            Maximum number of message processing trials, before the message is considered as
+            being poisonous, removed from the queue and persisted to the 'failing-messages' store.
+            </param>
+            <returns>Enumeration of messages, possibly empty.</returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.Put``1(System.String,``0)">
+            <summary>Put a message on a queue.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.PutRange``1(System.String,System.Collections.Generic.IEnumerable{``0})">
+            <summary>Put messages on a queue.</summary>
+            <typeparam name="T">Type of the messages.</typeparam>
+            <param name="queueName">Identifier of the queue where messages are put.</param>
+            <param name="messages">Messages to be put.</param>
+            <remarks>If the queue does not exist, it gets created.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.Clear(System.String)">
+            <summary>Clear all the messages from the specified queue.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.Delete``1(``0)">
+            <summary>Deletes a message being processed from the queue.</summary>
+            <returns><c>True</c> if the message has been deleted.</returns>
+            <remarks>Message must have first been retrieved through <see cref="M:Lokad.Cloud.Storage.IQueueStorageProvider.Get``1(System.String,System.Int32,System.TimeSpan,System.Int32)"/>.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.DeleteRange``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>Deletes messages being processed from the queue.</summary>
+            <typeparam name="T">Type of the messages.</typeparam>
+            <param name="messages">Messages to be removed.</param>
+            <returns>The number of messages actually deleted.</returns>
+            <remarks>Messages must have first been retrieved through <see cref="M:Lokad.Cloud.Storage.IQueueStorageProvider.Get``1(System.String,System.Int32,System.TimeSpan,System.Int32)"/>.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.Abandon``1(``0)">
+            <summary>
+            Abandon a message being processed and put it visibly back on the queue.
+            </summary>
+            <typeparam name="T">Type of the message.</typeparam>
+            <param name="message">Message to be abandoned.</param>
+            <returns><c>True</c> if the original message has been deleted.</returns>
+            <remarks>Message must have first been retrieved through <see cref="M:Lokad.Cloud.Storage.IQueueStorageProvider.Get``1(System.String,System.Int32,System.TimeSpan,System.Int32)"/>.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.AbandonRange``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            Abandon a set of messages being processed and put them visibly back on the queue.
+            </summary>
+            <typeparam name="T">Type of the messages.</typeparam>
+            <param name="messages">Messages to be abandoned.</param>
+            <returns>The number of original messages actually deleted.</returns>
+            <remarks>Messages must have first been retrieved through <see cref="M:Lokad.Cloud.Storage.IQueueStorageProvider.Get``1(System.String,System.Int32,System.TimeSpan,System.Int32)"/>.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.Persist``1(``0,System.String,System.String)">
+            <summary>
+            Persist a message being processed to a store and remove it from the queue.
+            </summary>
+            <typeparam name="T">Type of the message.</typeparam>
+            <param name="message">Message to be persisted.</param>
+            <param name="storeName">Name of the message persistence store.</param>
+            <param name="reason">Optional reason text on why the message has been taken out of the queue.</param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.PersistRange``1(System.Collections.Generic.IEnumerable{``0},System.String,System.String)">
+            <summary>
+            Persist a set of messages being processed to a store and remove them from the queue.
+            </summary>
+            <typeparam name="T">Type of the messages.</typeparam>
+            <param name="messages">Messages to be persisted.</param>
+            <param name="storeName">Name of the message persistence store.</param>
+            <param name="reason">Optional reason text on why the messages have been taken out of the queue.</param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.ListPersisted(System.String)">
+            <summary>
+            Enumerate the keys of all persisted messages of the provided store.
+            </summary>
+            <param name="storeName">Name of the message persistence store.</param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.GetPersisted(System.String,System.String)">
+            <summary>
+            Get details of a persisted message for inspection and recovery.
+            </summary>
+            <param name="storeName">Name of the message persistence store.</param>
+            <param name="key">Unique key of the persisted message as returned by ListPersisted.</param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.DeletePersisted(System.String,System.String)">
+            <summary>
+            Delete a persisted message.
+            </summary>
+            <param name="storeName">Name of the message persistence store.</param>
+            <param name="key">Unique key of the persisted message as returned by ListPersisted.</param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.RestorePersisted(System.String,System.String)">
+            <summary>
+            Put a persisted message back to the queue and delete it.
+            </summary>
+            <param name="storeName">Name of the message persistence store.</param>
+            <param name="key">Unique key of the persisted message as returned by ListPersisted.</param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.DeleteQueue(System.String)">
+            <summary>Deletes a queue.</summary>
+            <returns><c>true</c> if the queue name has been actually deleted.</returns>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.GetApproximateCount(System.String)">
+            <summary>Gets the approximate number of items in this queue.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.IQueueStorageProvider.GetApproximateLatency(System.String)">
+            <summary>Gets the approximate age of the top message of this queue.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.PersistedMessage">
+            <summary>
+            Persisted message details for inspection and recovery.
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.PersistedMessage.QueueName">
+            <summary>Identifier of the originating message queue.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.PersistedMessage.StoreName">
+            <summary>Name of the message persistence store.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.PersistedMessage.Key">
+            <summary>Unique key of the persisted message as returned by ListPersisted.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.PersistedMessage.InsertionTime">
+            <summary>Time when the message was inserted into the message queue.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.PersistedMessage.PersistenceTime">
+            <summary>Time when the message was persisted and removed from the message queue.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.PersistedMessage.DequeueCount">
+            <summary>The number of times the message has been dequeued.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.PersistedMessage.Reason">
+            <summary>Optional reason text why the message was persisted.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.PersistedMessage.DataXml">
+            <summary>XML representation of the message, if possible and supported by the serializer</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.PersistedMessage.IsDataAvailable">
+            <summary>True if the raw message data is available and can be restored.</summary>
+            <remarks>Can be true even if DataXML is not available.</remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Management.AssemblyInspector">
+            <summary>
+            Allows to inspect assemblies in a separate AppDomain.
+            </summary>
+            <remarks>
+            Use a <c>using</c> block so that <see cref="M:Dispose"/> is called.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Management.AssemblyInspector.#ctor(System.Byte[],System.Byte[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:AssemblyInspector"/> class.
+            </summary>
+            <param name="assemblyBytes">The assembly bytes.</param>
+            <param name="symbolBytes">The symbol store bytes if available, else null.</param>
+        </member>
+        <member name="M:Lokad.Cloud.Management.AssemblyInspector.Dispose">
+            <summary>Disposes of the object and the wrapped <see cref="T:System.AppDomain"/>.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.AssemblyInspector.AssemblyVersion">
+            <summary>Gets the assembly version.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.AssemblyWrapper">
+            <summary>
+            Wraps an assembly (to be used from within a secondary AppDomain).
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.AssemblyWrapper.#ctor(System.Byte[],System.Byte[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:AssemblyWrapper"/> class.
+            </summary>
+            <param name="assemblyBytes">The assembly bytes.</param>
+        </member>
+        <member name="P:Lokad.Cloud.Management.AssemblyWrapper.Version">
+            <summary>Gets the assembly version.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.PartitionMonitor">
+            <summary>
+            Cloud Partition and Worker Monitoring Data Provider
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.PartitionMonitor.#ctor(Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository)">
+            <summary>
+            Creates an instance of the <see cref="T:Lokad.Cloud.Diagnostics.PartitionMonitor"/> class.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.PartitionMonitor.RemoveStatisticsBefore(System.DateTimeOffset)">
+            <summary>
+            Remove statistics older than the provided time stamp.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.PartitionMonitor.RemoveStatisticsBefore(System.Int32)">
+            <summary>
+            Remove statistics older than the provided number of periods (0 removes all but the current period).
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.Runtime.ServiceFabricHost">
+            <summary>
+            Entry point, hosting the service fabric with one or more
+            continuously running isolated runtimes.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.ServiceFabricHost.StartRuntime">
+            <summary>
+            Start up the runtime. This step is required before calling Run.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.ServiceFabricHost.ShutdownRuntime">
+            <summary>Shutdown the runtime.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.ServiceFabricHost.Run">
+            <summary>Runtime Main Thread.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Mock.MemoryBlobStorageProvider">
+            <summary>Mock in-memory Blob Storage.</summary>
+            <remarks>
+            All the methods of <see cref="T:Lokad.Cloud.Mock.MemoryBlobStorageProvider"/> are thread-safe.
+            </remarks>
+        </member>
+        <member name="F:Lokad.Cloud.Mock.MemoryBlobStorageProvider._syncRoot">
+            <summary>naive global lock to make methods thread-safe.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Mock.MemoryBlobStorageProvider.Containers">
+            <summary> Containers Property.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.CloudAssemblies">
+            <summary>
+            Management facade for cloud assemblies.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudAssemblies.#ctor(Lokad.Cloud.Storage.IBlobStorageProvider,Lokad.ILog)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Lokad.Cloud.Management.CloudAssemblies"/> class.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudAssemblies.GetAssemblies">
+            <summary>
+            Enumerate infos of all configured cloud service assemblies.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudAssemblies.UploadAssemblyDll(System.Byte[],System.String)">
+            <summary>
+            Configure a .dll assembly file as the new cloud service assembly.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudAssemblies.UploadAssemblyZipContainer(System.Byte[])">
+            <summary>
+            Configure a zip container with one or more assemblies as the new cloud services.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudAssemblies.IsValidZipContainer(System.Byte[])">
+            <summary>
+            Verify whether the provided zip container is valid.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.ICloudDiagnosticsSource">
+            <summary>
+            Extension interface for custom or external diagnostics providers.
+            </summary>
+            <remarks>
+            If a diagnostics source is registered in IoC as member of
+            ICloudDiagnosticsSource, it will be queried by the diagnostics
+            infrastructure in regular intervals.
+            </remarks>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.ServiceExecutionFeedback">
+            <summary>
+            The execution result of a scheduled action, providing information that
+            might be considered for further scheduling.
+            </summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.ServiceExecutionFeedback.DontCare">
+            <summary>
+            No information available or the service is not interested in providing
+            any details.
+            </summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.ServiceExecutionFeedback.WorkAvailable">
+            <summary>
+            The service knows or assumes that there is more work available.
+            </summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.ServiceExecutionFeedback.DoneForNow">
+            <summary>
+            The service did some work, but knows or assumes that there is no more work
+            available.
+            </summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.ServiceExecutionFeedback.Skipped">
+            <summary>
+            The service skipped without doing any work (and expects the same for
+            successive calls).
+            </summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.ServiceExecutionFeedback.Failed">
+            <summary>
+            The service failed with a fatal error.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.Runtime.TriggerRestartException">
+            <summary>Throw this exception in order to force a worker restart.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.TriggerRestartException.#ctor">
+            <summary>Empty constructor.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.TriggerRestartException.#ctor(System.String)">
+            <summary>Constructor with message.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.TriggerRestartException.#ctor(System.String,System.Exception)">
+            <summary>Constructor with message and inner exception.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.TriggerRestartException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>Deserialization constructor.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.RuntimeFinalizer">
+            <summary>High-priority runtime finalizer. Attempts to finalize key cloud resources
+            when the runtime is forcibly shut down.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.RuntimeFinalizer._sync">
+            <summary>Locking object used to ensure the thread safety of instance.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.RuntimeFinalizer._disposables">
+            <summary>Collections of objects to be disposed on runtime finalization.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.RuntimeFinalizer.#ctor">
+            <summary>IoC constructor.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.DelayedMessage">
+            <summary>Used as a wrapper for delayed messages (stored in the
+            blob storage waiting to be pushed into a queue).</summary>
+            <seealso cref="!:DelayedQueue.PutWithDelay&lt;T&gt;(T,System.DateTime)"/>
+            <remarks>
+            Due to genericity, this message is not tagged with <c>DataContract</c>.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.DelayedMessage.#ctor(System.String,System.Object)">
+            <summary>Full constructor.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.DelayedMessage.QueueName">
+            <summary>Name of the queue where the inner message will be put
+            once the delay is expired.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.DelayedMessage.InnerMessage">
+            <summary>Inner message.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.DelayedMessageName.#ctor">
+            <summary>Empty constructor, used for prefixing.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.DelayedQueue">
+            <summary>Allows to put messages in a queue, delaying them as needed.</summary>
+            <remarks>A <see cref="T:Lokad.Cloud.Storage.IBlobStorageProvider"/> is used for storing messages that 
+            must be enqueued with a delay.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.DelayedQueue.#ctor(Lokad.Cloud.Storage.IBlobStorageProvider)">
+            <summary>Initializes a new instance of the <see cref="T:Lokad.Cloud.Storage.DelayedQueue"/> class.</summary>
+            <param name="provider">The blob storage provider.</param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.DelayedQueue.PutWithDelay``1(``0,System.DateTimeOffset)">
+            <summary>Put a message into the queue implicitly associated to the type <c>T</c> at the
+            time specified by the <c>triggerTime</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.DelayedQueue.PutWithDelay``1(``0,System.DateTimeOffset,System.String)">
+            <summary>Put a message into the queue identified by <c>queueName</c> at the
+            time specified by the <c>triggerTime</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.DelayedQueue.PutRangeWithDelay``1(System.Collections.Generic.IEnumerable{``0},System.DateTimeOffset)">
+            <summary>Put messages into the queue implicitly associated to the type <c>T</c> at the
+            time specified by the <c>triggerTime</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.DelayedQueue.PutRangeWithDelay``1(System.Collections.Generic.IEnumerable{``0},System.DateTimeOffset,System.String)">
+            <summary>Put messages into the queue identified by <c>queueName</c> at the
+            time specified by the <c>triggerTime</c>.</summary>
+            <remarks>This method acts as a delayed put operation, the message not being put
+            before the <c>triggerTime</c> is reached.</remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.Azure.TableStorageProvider">
+            <summary>Implementation based on the Table Storage of Windows Azure.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.TableStorageProvider.#ctor(Microsoft.WindowsAzure.StorageClient.CloudTableClient,Lokad.Cloud.Storage.IBinaryFormatter)">
+            <summary>IoC constructor.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.TableStorageProvider.UpsertInternal``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})">
+            <remarks>Upsert is making several storage calls to emulate the 
+            missing semantic from the Table Storage.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.TableStorageProvider.SliceEntities``1(System.Collections.Generic.IEnumerable{``0},System.Func{``0,System.Int32})">
+            <summary>Slice entities according the payload limitation of
+            the transaction group, plus the maximal number of entities to
+            be embedded into a single transaction.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Api10.CloudServiceInfo">
+            <summary>
+            Cloud Service Info
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudServiceInfo.ServiceName">
+            <summary>Name of the service</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudServiceInfo.IsStarted">
+            <summary>Current state of the service</summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.QueueService`1">
+            <summary>Strongly-type queue service (inheritors are instantiated by
+            reflection on the cloud).</summary>
+            <typeparam name="T">Message type</typeparam>
+            <remarks>
+            <para>The implementation is not constrained by the 8kb limit for <c>T</c> instances.
+            If the instances are larger, the framework will wrap them into the cloud storage.</para>
+            <para>Whenever possible, we suggest to design the service logic to be idempotent
+            in order to make the service reliable and ultimately consistent.</para>
+            <para>A empty constructor is needed for instantiation through reflection.</para>
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.QueueService`1.#ctor">
+            <summary>Default constructor</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.QueueService`1.StartImpl">
+            <summary>Do not try to override this method, use <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.StartRange(System.Collections.Generic.IEnumerable{`0})"/>
+            instead.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.QueueService`1.StartRange(System.Collections.Generic.IEnumerable{`0})">
+            <summary>Method called first by the <c>Lokad.Cloud</c> framework when messages are
+            available for processing. Default implementation is naively calling <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.Start(`0)"/>.
+            </summary>
+            <param name="messages">Messages to be processed.</param>
+            <remarks>
+            We suggest to make messages deleted asap through the <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.DeleteRange(System.Collections.Generic.IEnumerable{`0})"/>
+            method. Otherwise, messages will be automatically deleted when the method
+            returns (except if an exception is thrown obviously).
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.QueueService`1.Start(`0)">
+            <summary>Method called by <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.StartRange(System.Collections.Generic.IEnumerable{`0})"/>, passing the message.</summary>
+            <remarks>
+            This method is a syntactic sugar for <see cref="T:Lokad.Cloud.ServiceFabric.QueueService`1"/> inheritors
+            dealing only with 1 message at a time.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.QueueService`1.GetMore(System.Int32)">
+            <summary>Get more messages from the underlying queue.</summary>
+            <param name="count">Maximal number of messages to be retrieved.</param>
+            <returns>Retrieved messages (enumeration might be empty).</returns>
+            <remarks>It is suggested to <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.DeleteRange(System.Collections.Generic.IEnumerable{`0})"/> messages first
+            before asking for more.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.QueueService`1.GetMore(System.Int32,System.String)">
+            <summary>Get more message from an arbitrary queue.</summary>
+            <param name="count">Number of message to be retrieved.</param>
+            <param name="queueName">Name of the queue.</param>
+            <returns>Retrieved message (enumeration might be empty).</returns>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.QueueService`1.Delete(`0)">
+            <summary>
+            Delete message retrieved either through <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.StartRange(System.Collections.Generic.IEnumerable{`0})"/>
+            or through <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.GetMore(System.Int32)"/>.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.QueueService`1.DeleteRange(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Delete messages retrieved either through <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.StartRange(System.Collections.Generic.IEnumerable{`0})"/>
+            or through <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.GetMore(System.Int32)"/>.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.QueueService`1.Abandon(`0)">
+            <summary>
+            Abandon a messages retrieved either through <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.StartRange(System.Collections.Generic.IEnumerable{`0})"/>
+            or through <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.GetMore(System.Int32)"/> and put it visibly back on the queue.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.QueueService`1.AbandonRange(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Abandon a set of messages retrieved either through <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.StartRange(System.Collections.Generic.IEnumerable{`0})"/>
+            or through <see cref="M:Lokad.Cloud.ServiceFabric.QueueService`1.GetMore(System.Int32)"/> and put them visibly back on the queue.
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.QueueService`1.Name">
+            <summary>Name of the queue associated to the service.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.Certificate">
+            <summary>
+            Certificate
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Azure.Entities.Certificate.Data">
+            <remarks>Base64-Encoded X509</remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.CertificateList">
+            <summary>
+            List of certificates
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.TypeMapper">
+            <summary>Maps types to storage names, and vice-versa.</summary>
+            <remarks>
+            Spec on queue names: http://msdn.microsoft.com/en-us/library/dd179349.aspx
+            Spec on container names: http://msdn.microsoft.com/en-us/library/dd135715.aspx
+            </remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Management.CloudServices">
+            <summary>
+            Management facade for cloud services.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServices.#ctor(Lokad.Cloud.Storage.IBlobStorageProvider)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Lokad.Cloud.Management.CloudServices"/> class.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServices.GetServices">
+            <summary>
+            Enumerate infos of all cloud services.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServices.GetService(System.String)">
+            <summary>
+            Gets info of one cloud service.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServices.GetServiceNames">
+            <summary>
+            Enumerate the names of all cloud services.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServices.GetUserServiceNames">
+            <summary>
+            Enumerate the names of all user cloud services (system services are skipped).
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServices.EnableService(System.String)">
+            <summary>
+            Enable a cloud service
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServices.DisableService(System.String)">
+            <summary>
+            Disable a cloud service
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServices.ToggleServiceState(System.String)">
+            <summary>
+            Toggle the state of a cloud service
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServices.ResetServiceState(System.String)">
+            <summary>
+            Remove the state information of a cloud service
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.CloudInfrastructureProviders">
+            <summary>IoC argument for <see cref="T:Lokad.Cloud.ServiceFabric.CloudService"/> and other
+            cloud abstractions.</summary>
+            <remarks>This argument will be populated through Inversion Of Control (IoC)
+            by the Lokad.Cloud framework itself. This class is placed in the
+            <c>Lokad.Cloud.Framework</c> for convenience while inheriting a
+            <see cref="T:Lokad.Cloud.ServiceFabric.CloudService"/>.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.CloudInfrastructureProviders.#ctor(Lokad.Cloud.Storage.IBlobStorageProvider,Lokad.Cloud.Storage.IQueueStorageProvider,Lokad.Cloud.Storage.ITableStorageProvider,Lokad.ILog,Lokad.Cloud.Management.IProvisioningProvider,Lokad.Cloud.IRuntimeFinalizer)">
+            <summary>IoC constructor.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.CloudInfrastructureProviders.BlobStorage">
+            <summary>Abstracts the Blob Storage.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.CloudInfrastructureProviders.QueueStorage">
+            <summary>Abstracts the Queue Storage.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.CloudInfrastructureProviders.TableStorage">
+            <summary>Abstracts the Table Storage.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.CloudInfrastructureProviders.Log">
+            <summary>Error Logger</summary>
+        </member>
+        <member name="P:Lokad.Cloud.CloudInfrastructureProviders.Provisioning">
+            <summary>Abstracts the Management API.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.CloudInfrastructureProviders.RuntimeFinalizer">
+            <summary>Abstracts the finalizer (used for fast resource release
+            in case of runtime shutdown).</summary>
+        </member>
+        <member name="T:Lokad.Cloud.ICloudConfigurationSettings">
+            <summary>
+            Settings used among others by the <see cref="T:Lokad.Cloud.Storage.Azure.StorageModule"/>.
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.ICloudConfigurationSettings.DataConnectionString">
+            <summary>
+            Gets the data connection string.
+            </summary>
+            <value>The data connection string.</value>
+        </member>
+        <member name="P:Lokad.Cloud.ICloudConfigurationSettings.SelfManagementSubscriptionId">
+            <summary>
+            Gets the Azure subscription Id to be used for self management (optional, can be null).
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.ICloudConfigurationSettings.SelfManagementCertificateThumbprint">
+            <summary>
+            Gets the Azure certificate thumbpring to be used for self management (optional, can be null).
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.StorageCredentialsVerifier">
+            <summary>
+            Verifies that storage credentials are correct and allow access to blob and queue storage.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.StorageCredentialsVerifier.#ctor(Autofac.IContainer)">
+            <summary>
+            Initializes a new instance of the <see cref="T:StorageCredentialsVerifier" /> class.
+            </summary>
+            <param name="container">The IoC container.</param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.StorageCredentialsVerifier.VerifyCredentials">
+            <summary>
+            Verifies the storage credentials.
+            </summary>
+            <returns><c>true</c> if the credentials are correct, <c>false</c> otherwise.</returns>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.RankAttribute">
+            <summary>Used to specify the field position in the blob name.</summary>
+            <remarks>The name (chosen as the abbreviation of "field position")
+            is made compact not to make client code too verbose.</remarks>
+        </member>
+        <member name="F:Lokad.Cloud.Storage.RankAttribute.TreatDefaultAsNull">
+            <summary>Indicates whether the default value (for value types)
+            should be treated as 'null'. Not relevant for class types.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.RankAttribute.#ctor(System.Int32)">
+            <summary>Position v</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.RankAttribute.#ctor(System.Int32,System.Boolean)">
+            <summary>Position v, and default behavior.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.Azure.StorageModule">
+            <summary>IoC module that registers
+            <see cref="M:Lokad.Cloud.Storage.Azure.StorageModule.BlobStorageProvider(Autofac.IContext)"/>, <see cref="M:Lokad.Cloud.Storage.Azure.StorageModule.QueueStorageProvider(Autofac.IContext)"/> and
+            <see cref="M:Lokad.Cloud.Storage.Azure.StorageModule.TableStorageProvider(Autofac.IContext)"/> from the <see cref="T:Lokad.Cloud.ICloudConfigurationSettings"/>.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.Azure.QueueStorageProvider">
+            <summary>Provides access to the Queue Storage (plus the Blob Storage when
+            messages are overflowing).</summary>
+            <remarks>
+            <para>
+            Overflowing messages are stored in blob storage and normally deleted as with
+            their originating correspondence in queue storage.
+            </para>
+            <para>All the methods of <see cref="T:Lokad.Cloud.Storage.Azure.QueueStorageProvider"/> are thread-safe.</para>
+            </remarks>
+        </member>
+        <member name="F:Lokad.Cloud.Storage.Azure.QueueStorageProvider._sync">
+            <summary>Root used to synchronize accesses to <c>_inprocess</c>. 
+            Caution: do not hold the lock while performing operations on the cloud
+            storage.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.Storage.Azure.QueueStorageProvider._inProcessMessages">
+            <summary>Mapping object --> Queue Message Id. Use to delete messages afterward.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.QueueStorageProvider.#ctor(Microsoft.WindowsAzure.StorageClient.CloudQueueClient,Lokad.Cloud.Storage.IBlobStorageProvider,Lokad.Cloud.Storage.IBinaryFormatter,Lokad.Cloud.IRuntimeFinalizer)">
+            <summary>IoC constructor.</summary>
+            <param name="blobStorage">Not null.</param>
+            <param name="queueStorage">Not null.</param>
+            <param name="formatter">Not null.</param>
+            <param name="runtimeFinalizer">May be null (handy for strict O/C mapper
+            scenario).</param>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.QueueStorageProvider.Dispose">
+            <summary>
+            Disposing the provider will cause an abandon on all currently messages currently
+            in-process. At the end of the life-cycle of the provider, normally there is no
+            message in-process.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.QueueStorageProvider.DeleteQueue(System.String)">
+            <summary>
+            Deletes a queue.
+            </summary>
+            <returns><c>true</c> if the queue name has been actually deleted.</returns>
+            <remarks>
+            This implementation takes care of deleting overflowing blobs as
+            well.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.QueueStorageProvider.GetApproximateCount(System.String)">
+            <summary>
+            Gets the approximate number of items in this queue.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.QueueStorageProvider.GetApproximateLatency(System.String)">
+            <summary>
+            Gets the approximate age of the top message of this queue.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.Azure.InProcessMessage">
+            <summary>Represents a set of value-identical messages that are being processed by workers, 
+            i.e. were hidden from the queue because of calls to Get{T}.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.Azure.InProcessMessage.QueueName">
+            <summary>Name of the queue where messages are originating from.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.Azure.InProcessMessage.RawMessages">
+            <summary>The multiple, different raw <see cref="T:Microsoft.WindowsAzure.StorageClient.CloudQueueMessage"/> 
+            objects as returned from the queue storage.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.Azure.InProcessMessage.IsOverflowing">
+            <summary>A flag indicating whether the original message was bigger than the max 
+            allowed size and was  therefore wrapped in <see cref="T:Lokad.Cloud.Storage.MessageWrapper"/>.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.Storage.Azure.OverflowingMessageBlobName`1.QueueName">
+            <summary>Indicates the name of the queue where the message has been originally pushed.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.Storage.Azure.OverflowingMessageBlobName`1.MessageId">
+            <summary>Message identifiers as specified by the queue storage itself.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.OverflowingMessageBlobName`1.GetNew(System.String)">
+            <summary>Used to iterate over all the overflowing messages 
+            associated to a queue.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.Storage.Azure.PersistedMessageBlobName.StoreName">
+            <summary>Indicates the name of the swap out store where the message is persisted.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Api10.CloudServiceSchedulingInfo">
+            <summary>
+            Cloud Service Scheduling Info
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudServiceSchedulingInfo.ServiceName">
+            <summary>Name of the service.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudServiceSchedulingInfo.TriggerInterval">
+            <summary>Scheduled trigger interval.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudServiceSchedulingInfo.LastExecuted">
+            <summary>Last execution time stamp.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudServiceSchedulingInfo.WorkerScoped">
+            <summary>True if the services is worker scoped instead of cloud scoped.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudServiceSchedulingInfo.LeasedBy">
+            <summary>Owner of the lease.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudServiceSchedulingInfo.LeasedSince">
+            <summary>Point of time when the lease was acquired.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Api10.CloudServiceSchedulingInfo.LeasedUntil">
+            <summary>Point of time when the lease will timeout.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.CloudConfiguration">
+            <summary>
+            Management facade for cloud configuration.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudConfiguration.#ctor(Lokad.Cloud.Storage.IBlobStorageProvider)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Lokad.Cloud.Management.CloudConfiguration"/> class.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudConfiguration.GetConfigurationString">
+            <summary>
+            Get the cloud configuration file.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudConfiguration.SetConfiguration(System.String)">
+            <summary>
+            Set or update the cloud configuration file.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudConfiguration.RemoveConfiguration">
+            <summary>
+            Remove the cloud configuration file.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.PartitionStatistics">
+            <summary>
+            Cloud Partition and Worker Monitoring Statistics
+            </summary>
+            <remarks>
+            Properties prefixed with Lifetime refer to the lifetime of the partition's
+            process. Is a process restarted, the lifetime value will be reset to zero.
+            These additional values are needed internally in order to compute the
+            actual non-lifetime values.
+            </remarks>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.Runtime.Scheduler">
+            <summary>
+            Round robin scheduler with adaptive modifications: tasks that claim to have
+            more work ready are given the chance to continue until they reach a fixed
+            time limit (greedy), and the scheduling is slowed down when all available
+            services skip execution consecutively.
+            </summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.Runtime.Scheduler._moreOfTheSame">
+            <summary>Duration to keep pinging the same cloud service if service is active.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.Runtime.Scheduler._idleSleep">
+            <summary>Resting duration.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Scheduler.#ctor(System.Func{System.Collections.Generic.IEnumerable{Lokad.Cloud.ServiceFabric.CloudService}},System.Func{Lokad.Cloud.ServiceFabric.CloudService,Lokad.Cloud.ServiceFabric.ServiceExecutionFeedback})">
+            <summary>
+            Creates a new instance of the Scheduler class.
+            </summary>
+            <param name="serviceProvider">Provider of available cloud services</param>
+            <param name="schedule">Action to be invoked when a service is scheduled to run</param>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Scheduler.AbortWaitingSchedule">
+            <summary>Waits until the current service completes, and stop the scheduling.</summary>
+            <remarks>This method CANNOT be used in case the environment is stopping,
+            because the termination is going to be way too slow.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Scheduler.DemandsImmediateStart(Lokad.Cloud.ServiceFabric.ServiceExecutionFeedback)">
+            <summary>
+            The service was successfully executed and it might make sense to execute
+            it again immediately (greedy).
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Scheduler.WasSuccessfullyExecuted(Lokad.Cloud.ServiceFabric.ServiceExecutionFeedback)">
+            <summary>
+            The service was actually executed (not skipped) and did not fail.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.ExceptionTrackingMonitor">
+            <summary>
+            Generic Tracked Exception Monitoring Data Provider
+            </summary>
+            <remarks>
+            Implement <see cref="T:Lokad.Cloud.Diagnostics.ICloudDiagnosticsSource"/> 
+            to provide data from non-default counter sources.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExceptionTrackingMonitor.#ctor(Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository)">
+            <summary>
+            Creates an instance of the <see cref="T:Lokad.Cloud.Diagnostics.ExceptionTrackingMonitor"/> class.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExceptionTrackingMonitor.UpdateDefaultStatistics">
+            <remarks>
+            Base implementation collects default counters of this worker only
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExceptionTrackingMonitor.Update(System.String,System.Collections.Generic.IEnumerable{Lokad.Diagnostics.Persist.ExceptionData})">
+            <summary>
+            Update the statistics data with a set of additional new data items
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExceptionTrackingMonitor.RemoveStatisticsBefore(System.DateTimeOffset)">
+            <summary>
+            Remove statistics older than the provided time stamp.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExceptionTrackingMonitor.RemoveStatisticsBefore(System.Int32)">
+            <summary>
+            Remove statistics older than the provided number of periods (0 removes all but the current period).
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExceptionTrackingMonitor.Update(System.String,System.String,System.Collections.Generic.IEnumerable{Lokad.Diagnostics.Persist.ExceptionData})">
+            <summary>
+            Update the statistics data with a set of additional new data items
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExceptionTrackingMonitor.Aggregate(System.Collections.Generic.IEnumerable{Lokad.Diagnostics.Persist.ExceptionData})">
+            <summary>
+            Aggregation Helper
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.RoleInstance">
+            <summary>
+            Role Instance
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.RoleInstanceList">
+            <summary>
+            List of role instances
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.CloudProvisioning">
+            <summary>
+            Azure Management API Provider, Provisioning Provider.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudProvisioning.#ctor(Lokad.Cloud.ICloudConfigurationSettings,Lokad.ILog)">
+            <summary>IoC constructor.</summary>>
+        </member>
+        <member name="T:Lokad.Cloud.Standalone">
+            <summary>
+            Provider factory for standalone use of the cloud storage toolkit (O/C mapping)
+            (if not hosted as worker services in the ServiceFabric).
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Standalone.CreateProviders(Lokad.Cloud.ICloudConfigurationSettings)">
+            <summary>
+            Create standalone infrastructure providers using the specified settings.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Standalone.CreateProviders(System.String)">
+            <summary>
+            Create standalone infrastructure providers using the specified settings.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Standalone.CreateProvidersFromConfiguration(System.String)">
+            <summary>
+            Create standalone infrastructure providers using an IoC module configuration
+            in the local config file in the specified config section.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Standalone.CreateMockProviders">
+            <summary>
+            Create standalone mock infrastructure providers.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Lokad.Cloud.Standalone.CreateDevelopmentStorageProviders">
+            <summary>
+            Create standalone infrastructure providers bound to the local development storage.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.DiagnosticsModule">
+            <summary>
+            Cloud Diagnostics IoC Module
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.Runtime.IsolatedSingleRuntimeHost">
+            <summary>
+            AppDomain-isolated host for a single runtime instance.
+            </summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.Runtime.IsolatedSingleRuntimeHost._isolatedInstance">
+            <summary>Refer to the callee instance (isolated). This property is not null
+            only for the caller instance (non-isolated).</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.IsolatedSingleRuntimeHost.Run">
+            <summary>
+            Run the hosted runtime, blocking the calling thread.
+            </summary>
+            <returns>True if the worker stopped as planned (e.g. due to updated assemblies)</returns>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.IsolatedSingleRuntimeHost.Stop">
+            <summary>
+            Immediately stop the runtime host and wait until it has exited (or a timeout expired).
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.IsolatedSingleRuntimeHost.RequestToStop">
+            <summary>
+            Interrupt the runtime host at the next point where it fits well,
+            without forcibly aborting running jobs. Does not wait until it has exited.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.Runtime.SingleRuntimeHost">
+            <summary>
+            Host for a single runtime instance.
+            </summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.Runtime.SingleRuntimeHost._runtime">
+            <summary>Current hosted runtime instance.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.Runtime.SingleRuntimeHost._stoppedWaitHandle">
+            <summary>
+            Manual-reset wait handle, signaled once the host stopped running.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.SingleRuntimeHost.Run(Lokad.Maybe{Lokad.Cloud.ICloudConfigurationSettings})">
+            <summary>
+            Run the hosted runtime, blocking the calling thread.
+            </summary>
+            <returns>True if the worker stopped as planned (e.g. due to updated assemblies)</returns>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.SingleRuntimeHost.Stop">
+            <summary>
+            Immediately stop the runtime host and wait until it has exited (or a timeout expired).
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.SingleRuntimeHost.RequestToStop">
+            <summary>
+            Interrupt the runtime host at the next point where it fits well,
+            without forcibly aborting running jobs. Does not wait until it has exited.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.Operation">
+            <summary>
+            Asynchronous Operation
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.OperationError">
+            <summary>
+            Asynchronous Operation Error
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Services.MonitoringDataRetentionService">
+            <summary>
+            Removes monitoring statistics after a retention period of 24 segments each.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Services.MonitoringDataRetentionService.StartOnSchedule">
+            <summary>Called by the framework.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.CloudServiceState">
+            <summary>Status flag for <see cref="T:Lokad.Cloud.ServiceFabric.CloudService"/>s.</summary>
+            <remarks>Starting / stopping services isn't a synchronous operation,
+            it can take a little while before all the workers notice an update 
+            on the service state.</remarks>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.CloudServiceState.Started">
+            <summary>
+            Indicates that the service should be running.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.CloudServiceState.Stopped">
+            <summary>
+            Indicates that the service should be stopped.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.CloudServiceStateName">
+            <summary>Strong-typed blob name for cloud service state.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.CloudServiceStateName.ServiceName">
+            <summary>Name of the service being refered to.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudServiceStateName.#ctor(System.String)">
+            <summary>Instantiate a new blob name associated to the specified service.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.CloudServiceStateName.GetPrefix">
+            <summary>Let you iterate over the state of each cloud service.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.IAzureServiceManagement">
+            <summary>
+            Windows Azure Service Management API. 
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginGetOperationStatus(System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Gets the result of an asynchronous operation.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginSwapDeployment(System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.SwapDeploymentInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Swaps the deployment to a production slot.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginCreateOrUpdateDeployment(System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.CreateDeploymentInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Creates a deployment.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginDeleteDeployment(System.String,System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Deletes the specified deployment. This works against through the deployment name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginDeleteDeploymentBySlot(System.String,System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Deletes the specified deployment. This works against through the slot name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginGetDeployment(System.String,System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Gets the specified deployment details.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginGetDeploymentBySlot(System.String,System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Gets the specified deployment details.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginChangeConfiguration(System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.ChangeConfigurationInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Initiates a change to the deployment. This works against through the deployment name.
+            This is an asynchronous operation
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginChangeConfigurationBySlot(System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.ChangeConfigurationInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Initiates a change to the deployment. This works against through the slot name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginUpdateDeploymentStatus(System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.UpdateDeploymentStatusInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Initiates a change to the deployment. This works against through the deployment name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginUpdateDeploymentStatusBySlot(System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.UpdateDeploymentStatusInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Initiates a change to the deployment. This works against through the slot name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginUpgradeDeployment(System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.UpgradeDeploymentInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Initiates an deployment upgrade.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginUpgradeDeploymentBySlot(System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.UpgradeDeploymentInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Initiates an deployment upgrade through the slot name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginWalkUpgradeDomain(System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.WalkUpgradeDomainInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Initiates an deployment upgrade.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginWalkUpgradeDomainBySlot(System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.WalkUpgradeDomainInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Initiates an deployment upgrade through the slot name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginListAffinityGroups(System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Lists the affinity groups associated with the specified subscription.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginGetAffinityGroup(System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Get properties for the specified affinity group. 
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginListCertificates(System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Lists the certificates associated with a given subscription.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginGetCertificate(System.String,System.String,System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Gets public data for the given certificate.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginAddCertificates(System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.CertificateFileInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Adds certificates to the given subscription. 
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginDeleteCertificate(System.String,System.String,System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Deletes the given certificate.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginListHostedServices(System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Lists the hosted services associated with a given subscription.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginGetHostedService(System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Gets the properties for the specified hosted service.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginGetHostedServiceWithDetails(System.String,System.String,System.Boolean,System.AsyncCallback,System.Object)">
+            <summary>
+            Gets the detailed properties for the specified hosted service. 
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginListStorageServices(System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Lists the storage services associated with a given subscription.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginGetStorageService(System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Gets a storage service.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginGetStorageKeys(System.String,System.String,System.AsyncCallback,System.Object)">
+            <summary>
+            Gets the key of a storage service.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.IAzureServiceManagement.BeginRegenerateStorageServiceKeys(System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.RegenerateKeysInput,System.AsyncCallback,System.Object)">
+            <summary>
+            Regenerates keys associated with a storage service.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.StorageService">
+            <summary>
+            Storage Service
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.StorageServiceProperties">
+            <summary>
+            Storage Service Properties
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.StorageServiceKeys">
+            <summary>
+             Storage Service Keys
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.StorageServiceList">
+            <summary>
+            List of storage services
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.AffinityGroup">
+            <summary>
+            Affinity Group
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Azure.Entities.AffinityGroup.Label">
+            <remarks>Base64-Encoded</remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.AffinityGroupList">
+            <summary>
+            List of affinity groups
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:Lokad.Cloud.CloudModule" -->
+        <member name="T:Lokad.Cloud.CloudConfigurationModule">
+            <summary>
+            IoC configuration module for Azure storage and management credentials.
+            Recommended to be loaded either manually or in the appconfig.
+            </summary>
+            <remarks>
+            When only using the storage (O/C mapping) toolkit standalone it is easier
+            to let the <see cref="T:Lokad.Cloud.Standalone"/> factory create the storage providers on demand.
+            </remarks>
+            <seealso cref="T:Lokad.Cloud.CloudModule"/>
+            <seealso cref="T:Lokad.Cloud.Standalone"/>
+        </member>
+        <member name="P:Lokad.Cloud.CloudConfigurationModule.DataConnectionString">
+            <summary>Azure storage connection string.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.CloudConfigurationModule.SelfManagementSubscriptionId">
+            <summary>Azure subscription Id (optional).</summary>
+        </member>
+        <member name="P:Lokad.Cloud.CloudConfigurationModule.SelfManagementCertificateThumbprint">
+            <summary>Azure management certificate thumbprint (optional).</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.BlobCounter">
+            <summary>Simple non-sharded counter.</summary>
+            <remarks>The content of the counter is stored in a single blob value.</remarks>
+        </member>
+        <member name="F:Lokad.Cloud.Storage.BlobCounter.Aleph">
+            <summary>Constant value provided for the cloud enumeration pattern
+            over a queue.</summary>
+            <remarks>The constant value is <c>2^48</c>, expected to be sufficiently
+            large to avoid any arithmetic overflow with <c>long</c> values.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.BlobCounter.#ctor(Lokad.Cloud.Storage.IBlobStorageProvider,Lokad.Cloud.Storage.BlobName{System.Decimal})">
+            <summary>Shorthand constructor.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.BlobCounter.#ctor(Lokad.Cloud.Storage.IBlobStorageProvider,System.String,System.String)">
+            <summary>Full constructor.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.BlobCounter.GetValue">
+            <summary>Returns the value of the counter (or zero if there is no value to
+            be returned).</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.BlobCounter.Increment(System.Decimal)">
+            <summary>Atomic increment the counter value.</summary>
+            <remarks>If the counter does not exist before hand, it gets created with a zero value.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.BlobCounter.Reset(System.Decimal)">
+            <summary>Reset the counter at the given value.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.BlobCounter.Delete">
+            <summary>Deletes the counter.</summary>
+            <returns><c>true</c> if the counter has actually been deleted by the call,
+            and <c>false</c> otherwise.</returns>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.BlobCounter.ContainerName">
+            <summary>Container that is storing the counter.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.BlobCounter.BlobName">
+            <summary>Blob that is storing the counter.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.ManagementModule">
+            <summary>
+            IoC module for Lokad.Cloud management classes
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository">
+            <summary>
+            Diagnostics Cloud Data Repository to Blob Storage
+            </summary>
+            <remarks>
+            In order for retention to work correctly, time segments need to be strictly
+            ordered ascending by time and date when compared as string.
+            </remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository">
+            <summary>
+            Cloud Diagnostics Repository
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.GetExceptionTrackingStatistics(System.String)">
+            <summary>Get the statistics of all tracked exceptions.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.UpdateExceptionTrackingStatistics(System.String,System.String,System.Func{Lokad.Maybe{Lokad.Cloud.Diagnostics.ExceptionTrackingStatistics},Lokad.Cloud.Diagnostics.ExceptionTrackingStatistics})">
+            <summary>Update the statistics of a tracked exception.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.RemoveExceptionTrackingStatistics(System.String,System.String)">
+            <summary>Remove old statistics of tracked exceptions.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.GetExecutionProfilingStatistics(System.String)">
+            <summary>Get the statistics of all execution profiles.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.UpdateExecutionProfilingStatistics(System.String,System.String,System.Func{Lokad.Maybe{Lokad.Cloud.Diagnostics.ExecutionProfilingStatistics},Lokad.Cloud.Diagnostics.ExecutionProfilingStatistics})">
+            <summary>Update the statistics of an execution profile.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.RemoveExecutionProfilingStatistics(System.String,System.String)">
+            <summary>Remove old statistics of execution profiles.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.GetAllPartitionStatistics(System.String)">
+            <summary>Get the statistics of all cloud partitions.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.UpdatePartitionStatistics(System.String,System.String,System.Func{Lokad.Maybe{Lokad.Cloud.Diagnostics.PartitionStatistics},Lokad.Cloud.Diagnostics.PartitionStatistics})">
+            <summary>Update the statistics of a cloud partition.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.RemovePartitionStatistics(System.String,System.String)">
+            <summary>Remove old statistics of cloud partitions.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.GetAllServiceStatistics(System.String)">
+            <summary>Get the statistics of all cloud services.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.UpdateServiceStatistics(System.String,System.String,System.Func{Lokad.Maybe{Lokad.Cloud.Diagnostics.ServiceStatistics},Lokad.Cloud.Diagnostics.ServiceStatistics})">
+            <summary>Update the statistics of a cloud service.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository.RemoveServiceStatistics(System.String,System.String)">
+            <summary>Remove old statistics of cloud services.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.#ctor(Lokad.Cloud.Storage.IBlobStorageProvider)">
+            <summary>
+            Creates an Instance of the <see cref="T:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository"/> class.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.GetExceptionTrackingStatistics(System.String)">
+            <summary>
+            Get the statistics of all tracked exceptions.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.GetExecutionProfilingStatistics(System.String)">
+            <summary>
+            Get the statistics of all execution profiles.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.GetAllPartitionStatistics(System.String)">
+            <summary>
+            Get the statistics of all cloud partitions.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.GetAllServiceStatistics(System.String)">
+            <summary>
+            Get the statistics of all cloud services.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.UpdateExceptionTrackingStatistics(System.String,System.String,System.Func{Lokad.Maybe{Lokad.Cloud.Diagnostics.ExceptionTrackingStatistics},Lokad.Cloud.Diagnostics.ExceptionTrackingStatistics})">
+            <summary>
+            Update the statistics of a tracked exception.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.UpdateExecutionProfilingStatistics(System.String,System.String,System.Func{Lokad.Maybe{Lokad.Cloud.Diagnostics.ExecutionProfilingStatistics},Lokad.Cloud.Diagnostics.ExecutionProfilingStatistics})">
+            <summary>
+            Update the statistics of an execution profile.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.UpdatePartitionStatistics(System.String,System.String,System.Func{Lokad.Maybe{Lokad.Cloud.Diagnostics.PartitionStatistics},Lokad.Cloud.Diagnostics.PartitionStatistics})">
+            <summary>
+            Update the statistics of a cloud partition.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.UpdateServiceStatistics(System.String,System.String,System.Func{Lokad.Maybe{Lokad.Cloud.Diagnostics.ServiceStatistics},Lokad.Cloud.Diagnostics.ServiceStatistics})">
+            <summary>
+            Update the statistics of a cloud service.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.RemoveExceptionTrackingStatistics(System.String,System.String)">
+            <summary>
+            Remove old statistics of tracked exceptions.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.RemoveExecutionProfilingStatistics(System.String,System.String)">
+            <summary>
+            Remove old statistics of execution profiles.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.RemovePartitionStatistics(System.String,System.String)">
+            <summary>
+            Remove old statistics of cloud partitions.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.Persistence.BlobDiagnosticsRepository.RemoveServiceStatistics(System.String,System.String)">
+            <summary>
+            Remove old statistics of cloud services.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.ScheduledServiceSettingsAttribute">
+            <summary>Schedule settings for the execution of a <see cref="T:Lokad.Cloud.ServiceFabric.ScheduledService"/>.</summary>
+            <remarks>The implementation is kept very simple for now. Complete scheduling,
+            specifying specific hours or days will be added later on.</remarks>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.ScheduledServiceSettingsAttribute.TriggerInterval">
+            <summary>Indicates the interval between the scheduled executions
+            (expressed in seconds).</summary>
+            <remarks><c>TimeSpan</c> cannot be used here, because it's not compatible
+            with the attribute usage.</remarks>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.ScheduledServiceSettingsAttribute.SchedulePerWorker">
+            <summary>
+            Indicates whether the service is scheduled globally among all cloud
+            workers (default, <c>false</c>), or whether it should be scheduled
+            separately per worker. If scheduled per worker, the service will
+            effectively run the number of cloud worker instances times the normal
+            rate, and can run on multiple workers at the same time.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Mock.MemoryTableStorageProvider">
+            <summary>Mock in-memory TableStorage Provider.</summary>
+            <remarks>
+            All the methods of <see cref="T:Lokad.Cloud.Mock.MemoryTableStorageProvider"/> are thread-safe.
+            </remarks>
+        </member>
+        <member name="F:Lokad.Cloud.Mock.MemoryTableStorageProvider._syncRoot">
+            <summary>naive global lock to make methods thread-safe.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.#ctor">
+            <summary>
+            Constructor for <see cref="T:Lokad.Cloud.Mock.MemoryTableStorageProvider"/>.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.CreateTable(System.String)">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.CreateTable(System.String)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.DeleteTable(System.String)">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.DeleteTable(System.String)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.GetTables">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.GetTables"/>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.Get``1(System.String)">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.Get``1(System.String,System.String)">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String,System.String)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.Get``1(System.String,System.String,System.String,System.String)">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String,System.String,System.String,System.String)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.Get``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Get``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.String})"/>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.Insert``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Insert``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})"/>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.Update``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}},System.Boolean)">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Update``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}},System.Boolean)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.Upsert``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}})">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Update``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}},System.Boolean)"/>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.Delete``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Delete``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.String})"/>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryTableStorageProvider.Delete``1(System.String,System.Collections.Generic.IEnumerable{Lokad.Cloud.Storage.CloudEntity{``0}},System.Boolean)">
+            <see cref="M:Lokad.Cloud.Storage.ITableStorageProvider.Delete``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.String})"/>
+        </member>
+        <member name="T:Lokad.Cloud.Mock.MemoryTableStorageProvider.MockTableStorageException">
+            <summary>
+            Exception raised my MemoryTableStorageProvider.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.Deployment">
+            <summary>
+            Deployment
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Azure.Entities.Deployment.Label">
+            <remarks>Base64-Encoded</remarks>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Azure.Entities.Deployment.Configuration">
+            <remarks>Base64-Encoded</remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.UpgradeStatus">
+            <summary>
+            Deployment Upgrade Status
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.DeploymentList">
+            <summary>
+            List of deployments
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.CloudEntity`1">
+            <summary>Entity to be stored by the <see cref="T:Lokad.Cloud.Storage.ITableStorageProvider"/>.</summary>
+            <typeparam name="T">Type of the value carried by the entity.</typeparam>
+            <remarks>Once serialized the <c>CloudEntity.Value</c> should weight less
+            than 720KB to be compatible with Table Storage limitations on entities.</remarks>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.CloudEntity`1.RowKey">
+            <summary>Indexed system property.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.CloudEntity`1.PartitionKey">
+            <summary>Indexed system property.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.CloudEntity`1.Timestamp">
+            <summary>Flag indicating last update. Populated by the Table Storage.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.CloudEntity`1.ETag">
+            <summary>ETag. Indicates changes. Populated by the Table Storage.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.Storage.CloudEntity`1.Value">
+            <summary>Value carried by the entity.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.LogEntry">
+            <summary>Log entry (when retrieving logs with the <see cref="T:Lokad.Cloud.Diagnostics.CloudLogger"/>.
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.CloudLogger">
+            <summary>Logger built on top of the Blob Storage.</summary>
+            <remarks>
+            Logs are formatted in XML with
+            <code>
+            &lt;log&gt;
+              &lt;message&gt; {0} &lt;/message&gt;
+              &lt;error&gt; {1} &lt;/error&gt;
+            &lt;/log&gt;
+            </code>
+            
+            Also, the logger is relying on date prefix in order to facilitate large
+            scale enumeration of the logs. Yet, in order to facilitate fast enumeration
+            of recent logs, an prefix inversion trick is used.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.CloudLogger.GetRecentLogs">
+            <summary>Lazily enumerates over the entire logs.</summary>
+            <returns></returns>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.CloudLogger.GetPagedLogs(System.Int32,System.Int32)">
+            <summary>Lazily loads a page of logs.</summary>
+            <param name="pageIndex">The zero-based index of the page.</param>
+            <param name="pageSize">The size of the page.</param>
+            <returns>The logs (silently fails if the page is empty).</returns>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.CloudLogger.GetPagedLogs(System.Int32,System.Int32,Lokad.LogLevel)">
+            <summary>Lazily loads a page of logs.</summary>
+            <param name="pageIndex">The zero-based index of the page.</param>
+            <param name="pageSize">The size of the page.</param>
+            <param name="levelThreshold">Minimal log level (inclusive) for entries to be included.</param>
+            <returns>The logs (silently fails if the page is empty).</returns>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.CloudLogger.DeleteOldLogs(System.Int32)">
+            <summary>Deletes all the logs older than <paramref name="maxWeeks"/> weeks.</summary>
+            <param name="maxWeeks">The max number of weeks of logs to preserve.</param>
+            <remarks>The implementation is far from being efficient, but it is expected to be used sparingly.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.CloudLogger.ToPrefix(System.DateTime)">
+            <summary>Time prefix with inversion in order to enumerate
+            starting from the most recent.</summary>
+            <remarks>This method is the symmetric of <see cref="M:Lokad.Cloud.Diagnostics.CloudLogger.ToDateTime(System.String)"/>.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.CloudLogger.ToDateTime(System.String)">
+            <summary>Convert a prefix with inversion into a <c>DateTime</c>.</summary>
+            <remarks>This method is the symmetric of <see cref="M:Lokad.Cloud.Diagnostics.CloudLogger.ToPrefix(System.DateTime)"/>.</remarks>
+        </member>
+        <member name="P:Lokad.Cloud.Diagnostics.CloudLogger.LogLevelThreshold">
+            <summary>Minimal log level (inclusive), below this level,
+            notifications are ignored.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.CloudLogProvider">
+            <summary>
+             Log provider for the cloud logger
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.CloudEnvironment">
+            <summary>
+            Cloud Environment Helper
+            </summary>
+            <remarks>
+            Providing functionality of Azure <see cref="T:Microsoft.WindowsAzure.ServiceRuntime.RoleEnvironment"/>,
+            but more neutral and resilient to missing runtime.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.CloudEnvironment.GetLocalStoragePath(System.String)">
+            <summary>
+            Retrieves the root path of a named local resource.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.CloudEnvironment.GetConfigurationSetting(System.String)">
+            <summary>
+             Retreives the configuration setting from the <see cref="T:Microsoft.WindowsAzure.ServiceRuntime.RoleEnvironment"/>.
+            </summary>
+            <param name="configurationSettingName">Name of the configuration setting</param>
+            <returns>configuration value, or an empty result, if the environment is not present, or the value is null or empty</returns>
+        </member>
+        <member name="P:Lokad.Cloud.CloudEnvironment.IsAvailable">
+            <summary>
+            Indicates whether the instance is running in the Cloud environment.
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.CloudEnvironment.PartitionKey">
+            <summary>
+            Cloud Worker Key
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.CloudEnvironment.AzureCurrentInstanceId">
+            <summary>
+            ID of the Cloud Worker Instances
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Services.DelayedQueueService">
+            <summary>Routinely checks for expired delayed messages that needs to
+            be put in queue for immediate consumption.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Mock.MemoryQueueStorageProvider">
+            <summary>Mock in-memory Queue Storage.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.Mock.MemoryQueueStorageProvider._sync">
+            <summary>Root used to synchronize accesses to <c>_inprocess</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Mock.MemoryQueueStorageProvider.#ctor">
+            <summary>Default constructor.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.CloudStatistics">
+            <summary>
+            Management facade for cloud configuration.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudStatistics.#ctor(Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Lokad.Cloud.Management.CloudStatistics"/> class.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudStatistics.GetPartitionsOfMonth(System.Nullable{System.DateTime})">
+            <summary>Get the statistics of all cloud partitions on the provided month.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudStatistics.GetPartitionsOfDay(System.Nullable{System.DateTime})">
+            <summary>Get the statistics of all cloud partitions on the provided day.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudStatistics.GetServicesOfMonth(System.Nullable{System.DateTime})">
+            <summary>Get the statistics of all cloud services on the provided month.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudStatistics.GetServicesOfDay(System.Nullable{System.DateTime})">
+            <summary>Get the statistics of all cloud services on the provided day.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudStatistics.GetExceptionsOfMonth(System.Nullable{System.DateTime})">
+            <summary>Get the statistics of all tracked exceptions on the provided month.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudStatistics.GetExceptionsOfDay(System.Nullable{System.DateTime})">
+            <summary>Get the statistics of all tracked exceptions on the provided day.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudStatistics.GetProfilesOfMonth(System.Nullable{System.DateTime})">
+            <summary>Get the statistics of all execution profiles on the provided month.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudStatistics.GetProfilesOfDay(System.Nullable{System.DateTime})">
+            <summary>Get the statistics of all execution profiles on the provided day.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.TimeSegments">
+            <remarks>
+            Generated time segments are strictly ordered ascending by time and date
+            when compared as string.
+            </remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Diagnostics.ExecutionProfilingMonitor">
+            <summary>
+            Generic Execution Profile Monitoring Data Provider
+            </summary>
+            <remarks>
+            Implement <see cref="T:Lokad.Cloud.Diagnostics.ICloudDiagnosticsSource"/> 
+            to provide data from non-default counter sources.
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExecutionProfilingMonitor.#ctor(Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository)">
+            <summary>
+            Creates an instance of the <see cref="T:Lokad.Cloud.Diagnostics.ExecutionProfilingMonitor"/> class.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExecutionProfilingMonitor.UpdateDefaultStatistics">
+            <remarks>
+            Base implementation collects default counters of this worker
+            </remarks>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExecutionProfilingMonitor.Update(System.String,System.Collections.Generic.IEnumerable{Lokad.Diagnostics.Persist.ExecutionData})">
+            <summary>
+            Update the statistics data with a set of additional new data items
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExecutionProfilingMonitor.RemoveStatisticsBefore(System.DateTimeOffset)">
+            <summary>
+            Remove statistics older than the provided time stamp.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExecutionProfilingMonitor.RemoveStatisticsBefore(System.Int32)">
+            <summary>
+            Remove statistics older than the provided number of periods (0 removes all but the current period).
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExecutionProfilingMonitor.Update(System.String,System.String,System.Collections.Generic.IEnumerable{Lokad.Diagnostics.Persist.ExecutionData})">
+            <summary>
+            Update the statistics data with a set of additional new data items
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Diagnostics.ExecutionProfilingMonitor.Aggregate(System.Collections.Generic.IEnumerable{Lokad.Diagnostics.Persist.ExecutionData})">
+            <summary>
+            Aggregation Helper
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.Runtime.Runtime">
+            <summary>Organize the executions of the services.</summary>
+        </member>
+        <member name="F:Lokad.Cloud.ServiceFabric.Runtime.Runtime._executeThread">
+            <summary>Main thread used to schedule services in <see cref="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.Execute"/>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.#ctor(Lokad.Cloud.CloudInfrastructureProviders,Lokad.Cloud.Diagnostics.ICloudDiagnosticsRepository)">
+            <summary>IoC constructor.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.Execute">
+            <summary>Called once by the service fabric. Call is not supposed to return
+            until stop is requested, or an uncaught exception is thrown.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.Stop">
+            <summary>Stops all services at once.</summary>
+            <remarks>Called once by the service fabric when environment is about to
+            be shut down.</remarks>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.RequestToStop">
+            <summary>Raise the "stop requested" flag and aborts the runtime
+            if it was waiting idly. This method does not force running jobs though
+            and is thus too slow to be used if the envirronment is
+            requesting immediate shutdown, but has the advantage of gracefully
+            shutting down the services.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.OnRuntimeStarting">
+            <summary>
+            Called when the runtime is starting execution.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.OnRuntimeStopping">
+            <summary>
+            Called when the runtime is stopping execution.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.LoadServices``1(Autofac.IContainer)">
+            <summary>
+            Load and get all service instances using the provided IoC container.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.RunService(Lokad.Cloud.ServiceFabric.CloudService)">
+            <summary>
+            Run a scheduled service
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.TryDumpDiagnostics">
+            <summary>
+            Try to dump diagnostics, but suppress any exceptions if it fails
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.TryLogInfoFormat(System.String,System.Object[])">
+            <summary>
+            Try to log info, but suppress any exceptions if it fails
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.Runtime.ApplyConfiguration(System.Byte[],Autofac.IContainer)">
+            <summary>
+            Apply the configuration provided in text as raw bytes to the provided IoC
+            container.
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.Runtime.Runtime.RuntimeContainer">
+            <summary>Container used to populate cloud service properties.</summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.Runtime.Runtime.ServiceInExecution">
+            <summary>The name of the service that is being executed, if any, <c>null</c> otherwise.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.HostedService">
+            <summary>
+            Hosted Service
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.HostedServiceProperties">
+            <summary>
+            Hosted Service Properties
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.Management.Azure.Entities.HostedServiceProperties.Label">
+            <remarks>Base64-Encoded</remarks>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.Entities.HostedServiceList">
+            <summary>
+            List of host services
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.Storage.Azure.FatEntity">
+            <summary>This entity is basically a workaround the 64KB limitation
+            for entity properties. 15 properties represents a total storage
+            capability of 960KB (entity limit is at 1024KB).</summary>
+            <remarks>This class is basically a hack against the Table Storage
+            to work-around the 64KB limitation for properties.</remarks>
+        </member>
+        <member name="F:Lokad.Cloud.Storage.Azure.FatEntity.MaxByteCapacity">
+            <summary>
+            Maximal entity size is 1MB. Out of that, we keep only
+            960kb (1MB - 64kb as a safety margin). Then, it should be taken
+            into account that byte[] are Base64 encoded which represent
+            a penalty overhead of 4/3 - hence the reduced capacity.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.FatEntity.GetPayload">
+            <summary>Returns an upper bound approximation of the payload associated to
+            the entity once serialized as XML Atom (used for communication with the
+            Table Storage).</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.FatEntity.Convert``1(Lokad.Cloud.Storage.Azure.FatEntity,Lokad.Cloud.Storage.IBinaryFormatter,System.String)">
+            <summary>Converts a <c>FatEntity</c> toward a <c>CloudEntity</c>.</summary>
+        </member>
+        <member name="M:Lokad.Cloud.Storage.Azure.FatEntity.Convert``1(Lokad.Cloud.Storage.CloudEntity{``0},Lokad.Cloud.Storage.IBinaryFormatter)">
+            <summary>Converts a <c>CloudEntity</c> toward a <c>FatEntity</c>.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.CloudServiceScheduling">
+            <summary>
+            Management facade for scheduled cloud services.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServiceScheduling.#ctor(Lokad.Cloud.Storage.IBlobStorageProvider)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Lokad.Cloud.Management.CloudServiceScheduling"/> class.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServiceScheduling.GetSchedules">
+            <summary>
+            Enumerate infos of all cloud service schedules.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServiceScheduling.GetSchedule(System.String)">
+            <summary>
+            Gets infos of one cloud service schedule.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServiceScheduling.GetScheduledServiceNames">
+            <summary>
+            Enumerate the names of all scheduled cloud service.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServiceScheduling.GetScheduledUserServiceNames">
+            <summary>
+            Enumerate the names of all scheduled user cloud service (system services are skipped).
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServiceScheduling.SetTriggerInterval(System.String,System.TimeSpan)">
+            <summary>
+            Set the trigger interval of a cloud service.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServiceScheduling.ResetSchedule(System.String)">
+            <summary>
+            Remove the scheduling information of a cloud service
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.CloudServiceScheduling.ReleaseLease(System.String)">
+            <summary>
+            Forcibly remove the synchronization lease of a periodic cloud service
+            </summary>
+        </member>
+        <member name="T:Lokad.Cloud.ServiceFabric.Runtime.NoRestartFloodPolicy">
+            <summary>
+            Helper class to deal with pathological situations where a worker crashes at
+            start-up time (typically because initialization or assembly loading goes
+            wrong). Instead of performing a high-frequency restart (producing junk logs
+            among other), when restart flood is detected restarts are forcefully slowed
+            down.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.ServiceFabric.Runtime.NoRestartFloodPolicy.Do(System.Func{System.Boolean})">
+            <summary>
+            Endlessly restart the provided action, but avoiding restart flooding
+            patterns.
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.Runtime.NoRestartFloodPolicy.FloodFrequencyThreshold">
+            <summary>
+            Minimal duration between worker restart to be considered as a regular
+            situation (restart can happen from time to time).
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.Runtime.NoRestartFloodPolicy.DelayWhenFlooding">
+            <summary>
+            Delay to be applied before the next restart when a flooding situation is
+            detected.
+            </summary>
+        </member>
+        <member name="P:Lokad.Cloud.ServiceFabric.Runtime.NoRestartFloodPolicy.IsStopRequested">
+            <summary>When stop is requested, policy won't go on with restarts anymore.</summary>
+        </member>
+        <member name="T:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods">
+            <summary>
+            Synchronous wrappers around the asynchronous web service channel.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.GetOperationStatus(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String)">
+            <summary>
+            Gets the result of an asynchronous operation.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.SwapDeployment(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.SwapDeploymentInput)">
+            <summary>
+            Swaps the deployment to a production slot.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.CreateOrUpdateDeployment(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.CreateDeploymentInput)">
+            <summary>
+            Creates a deployment.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.DeleteDeployment(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String)">
+            <summary>
+            Deletes the specified deployment. This works against either through the deployment name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.DeleteDeploymentBySlot(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String)">
+            <summary>
+            Deletes the specified deployment. This works against either through the slot name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.GetDeployment(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String)">
+            <summary>
+            Gets the specified deployment details.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.GetDeploymentBySlot(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String)">
+            <summary>
+            Gets the specified deployment details.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.ChangeConfiguration(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.ChangeConfigurationInput)">
+            <summary>
+            Initiates a change to the deployment. This works against through the deployment name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.ChangeConfigurationBySlot(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.ChangeConfigurationInput)">
+            <summary>
+            Initiates a change to the deployment. This works against through the slot name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.UpdateDeploymentStatus(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.UpdateDeploymentStatusInput)">
+            <summary>
+            Initiates a change to the deployment. This works against through the deployment name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.UpdateDeploymentStatusBySlot(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.UpdateDeploymentStatusInput)">
+            <summary>
+            Initiates a change to the deployment. This works against through the slot name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.UpgradeDeployment(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.UpgradeDeploymentInput)">
+            <summary>
+            Initiates an deployment upgrade.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.UpgradeDeploymentBySlot(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.UpgradeDeploymentInput)">
+            <summary>
+            Initiates an deployment upgrade through the slot name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.WalkUpgradeDomain(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.WalkUpgradeDomainInput)">
+            <summary>
+            Initiates an deployment upgrade.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.WalkUpgradeDomainBySlot(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.WalkUpgradeDomainInput)">
+            <summary>
+            Initiates an deployment upgrade through the slot name.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.ListAffinityGroups(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String)">
+            <summary>
+            Lists the affinity groups associated with the specified subscription.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.GetAffinityGroup(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String)">
+            <summary>
+            Get properties for the specified affinity group. 
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.ListCertificates(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String)">
+            <summary>
+            Lists the certificates associated with a given subscription.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.GetCertificate(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String,System.String)">
+            <summary>
+            Gets public data for the given certificate.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.AddCertificates(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.CertificateFileInput)">
+            <summary>
+            Adds certificates to the given subscription. 
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.DeleteCertificate(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.String,System.String)">
+            <summary>
+            Deletes the given certificate.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.ListHostedServices(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String)">
+            <summary>
+            Lists the hosted services associated with a given subscription.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.GetHostedService(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String)">
+            <summary>
+            Gets the properties for the specified hosted service.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.GetHostedServiceWithDetails(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,System.Boolean)">
+            <summary>
+            Gets the detailed properties for the specified hosted service. 
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.ListStorageServices(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String)">
+            <summary>
+            Lists the storage services associated with a given subscription.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.GetStorageService(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String)">
+            <summary>
+            Gets a storage service.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.GetStorageKeys(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String)">
+            <summary>
+            Gets the key of a storage service.
+            </summary>
+        </member>
+        <member name="M:Lokad.Cloud.Management.Azure.SynchronousApiExtensionMethods.RegenerateStorageServiceKeys(Lokad.Cloud.Management.Azure.IAzureServiceManagement,System.String,System.String,Lokad.Cloud.Management.Azure.InputParameters.RegenerateKeysInput)">
+            <summary>
+            Regenerates keys associated with a storage service.
+            </summary>
+        </member>
+        <member name="T:GlobalAssemblyInfo">
+            <summary>
+             Assembly information class that is shared between all projects
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<ServiceConfiguration serviceName="Lokad.Cloud.Snapshot" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration">
+  <Role name="Lokad.Cloud.Snapshot.Cloud.Worker">
+    <Instances count="1" />
+    <ConfigurationSettings>
+      <Setting name="SnapshotManagementAccount" value="DefaultEndpointsProtocol=https;AccountName=ACCOUNT;AccountKey=KEY" />
+      <Setting name="LiveAccounts" value="ACCOUNT1;KEY1;ACCOUNT2;KEY2" />
+      <Setting name="SnapshotIntervalDays" value="1.0" />
+      <Setting name="NumberOfSnapshotsToKeep" value="5" />
+    </ConfigurationSettings>
+  </Role>
+  <Role name="Lokad.Cloud.Snapshot.Cloud.UI">
+    <Instances count="1" />
+    <ConfigurationSettings>
+      <Setting name="SnapshotManagementAccount" value="DefaultEndpointsProtocol=https;AccountName=ACCOUNT;AccountKey=KEY" />
+      <Setting name="MonitoringApiKey" value="APIKEY" />
+      <Setting name="Admins" value="OpenID1 OpenID2 OpenID3" />
+    </ConfigurationSettings>
+  </Role>
+</ServiceConfiguration>
